@@ -3,9 +3,7 @@ use std::io::{stdin, prelude::BufRead};
 fn main() {
     let modules: Vec<u32> = stdin().lock()
         .lines()
-        .filter_map(Result::ok)
-        .map(|l| l.parse::<u32>())
-        .filter_map(Result::ok)
+        .filter_map(|l| l.ok().and_then(|m| m.parse::<u32>().ok()))
         .collect();
 
     println!("Part 1: {}", modules.iter().map(fuel_required).sum::<u32>());
