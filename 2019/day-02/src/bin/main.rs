@@ -13,18 +13,13 @@ fn main() {
     program[2] = 2;
 
     for i in (0..program.len() - 1).step_by(4) {
-        println!("processing index: {}, value: {}", i, program[i]);
+        let target = program[i + 3] as usize;
         match program[i] {
-            1 => program[program[i + 3] as usize] = program[program[i + 1] as usize] + program[program[i + 2] as usize],
-            2 => program[program[i + 3] as usize] = program[program[i + 1] as usize] * program[program[i + 2] as usize],
-            99 => {
-                println!("breaking at {}", i);
-                break
-            }
+            1 => program[target] = program[program[i + 1] as usize] + program[program[i + 2] as usize],
+            2 => program[target] = program[program[i + 1] as usize] * program[program[i + 2] as usize],
+            99 => break,
             _ => panic!("invalid instruction code")
         }
-
-        println!("did set {}", program[i + 3]);
     }
 
     println!("Part 1: {}", program[0]);
