@@ -1,26 +1,54 @@
 use std::io::{stdin, Read};
-// use std::fs;
 
-fn main() {
+fn main() -> Result<(), &'static str> {
     let mut input = String::new();
     stdin().read_to_string(&mut input).unwrap();
 
-    let mut program: Vec<u32> = input.split(',')
+    let memory: Vec<u32> = input.split(',')
         .filter_map(|n| n.parse::<u32>().ok())
         .collect();
 
-    program[1] = 12;
-    program[2] = 2;
+    let program = Program::new(memory);
 
-    for i in (0..program.len() - 1).step_by(4) {
-        let target = program[i + 3] as usize;
-        match program[i] {
-            1 => program[target] = program[program[i + 1] as usize] + program[program[i + 2] as usize],
-            2 => program[target] = program[program[i + 1] as usize] * program[program[i + 2] as usize],
-            99 => break,
-            _ => panic!("invalid instruction code")
+    let part1 = program.compute(12, 2).unwrap();
+    println!("Part 1: {}", part1);
+
+    for noun in 0..100 {
+        for verb in 0..100 {
+            let part2 = program.compute(noun, verb).unwrap();
+            if part2 == 19690720 {
+                println!("Part 2: {}", 100 * noun + verb);
+                return Ok(())
+            }
         }
     }
 
-    println!("Part 1: {}", program[0]);
+    Err("can't find a match for part2")
+}
+
+struct Program(Vec<u32>);
+
+impl Program {
+    fn new(mem: Vec<u32>) -> Program {
+        Program(mem)
+    }
+
+    fn compute(&self, noun: u32, verb: u32) -> Result<u32, &str> {
+        let Program(mem_origin) = self;
+        let mut mem = mem_origin.clone();
+        mem[1] = noun;
+        mem[2] = verb;
+
+        for i in (0..mem.len() - 1).step_by(4) {
+            let target = mem[i + 3] as usize;
+            match mem[i] {
+                1 => mem[target] = mem[mem[i + 1] as usize] + mem[mem[i + 2] as usize],
+                2 => mem[target] = mem[mem[i + 1] as usize] * mem[mem[i + 2] as usize],
+                99 => break,
+                _ => return Err("invalid instruction code")
+            }
+        }
+
+        Ok(mem[0])
+    }
 }
