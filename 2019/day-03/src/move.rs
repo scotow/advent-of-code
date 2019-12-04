@@ -7,7 +7,7 @@ pub enum Error {
     ParseError(Option<ParseIntError>)
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Move {
     Right(i16),
     Up(i16)
