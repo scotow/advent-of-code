@@ -11,9 +11,9 @@ fn main() {
         .map(|n| n.parse::<u32>().unwrap())
         .collect();
 
-    let range = Range::new(inputs[0], inputs[1], is_valid_serie);
+    let range = Range::new(inputs[0], inputs[1], is_valid_serie_windows);
     println!("Part 1: {}", range.count());
 
-    let range = Range::new(inputs[0], inputs[1], is_valid_double);
+    let range = Range::new(inputs[0], inputs[1], is_valid_double_windows);
     println!("Part 2: {}", range.count());
 }

@@ -51,6 +51,15 @@ pub fn is_valid_serie(n: &Vec<u8>) -> bool {
     has_double
 }
 
+pub fn is_valid_serie_windows(n: &Vec<u8>) -> bool {
+    n.windows(2).all(|d| {
+        d[0] <= d[1]
+    }) &&
+    n.windows(2).any(|d| {
+        d[0] == d[1]
+    })
+}
+
 pub fn is_valid_double(n: &Vec<u8>) -> bool {
     let last = n.len() - 1;
     let mut has_double = false;
@@ -77,6 +86,20 @@ pub fn is_valid_double(n: &Vec<u8>) -> bool {
     has_double
 }
 
+pub fn is_valid_double_windows(n: &Vec<u8>) -> bool {
+    assert_eq!(n.len(), 6);
+
+    let mut padded = [10; 8];
+    padded[1..7].copy_from_slice(&n);
+
+    n.windows(2).all(|d| {
+        d[0] <= d[1]
+    }) &&
+    padded.windows(4).any(|d| {
+        d[0] != d[1] && d[1] == d[2] && d[2] != d[3]
+    })
+}
+
 fn increment(n: &mut Vec<u8>) {
     let last = n.len() - 1;
     n[last] += 1;
@@ -99,6 +122,16 @@ fn is_valid_serie_test() {
 }
 
 #[test]
+fn is_valid_serie_windows_test() {
+    assert!(is_valid_serie_windows(&vec!(1, 2, 2, 3, 4, 5)));
+    assert!(is_valid_serie_windows(&vec!(1, 1, 1, 1, 2, 3)));
+    assert!(is_valid_serie_windows(&vec!(1, 1, 1, 1, 1, 1)));
+
+    assert!(!is_valid_serie_windows(&vec!(2, 2, 3, 4, 5, 0)));
+    assert!(!is_valid_serie_windows(&vec!(1, 2, 3, 7, 8, 9)));
+}
+
+#[test]
 fn is_valid_double_test() {
     assert!(is_valid_double(&vec!(1, 2, 2, 3, 4, 5)));
     assert!(is_valid_double(&vec!(1, 1, 2, 2, 3, 3)));
@@ -109,6 +142,19 @@ fn is_valid_double_test() {
     assert!(!is_valid_double(&vec!(1, 1, 1, 1, 2, 3)));
     assert!(!is_valid_double(&vec!(1, 1, 1, 1, 1, 1)));
     assert!(!is_valid_double(&vec!(1, 2, 3, 4, 4, 4)));
+}
+
+#[test]
+fn is_valid_double_windows_test() {
+    assert!(is_valid_double_windows(&vec!(1, 2, 2, 3, 4, 5)));
+    assert!(is_valid_double_windows(&vec!(1, 1, 2, 2, 3, 3)));
+    assert!(is_valid_double_windows(&vec!(1, 1, 1, 1, 2, 2)));
+
+    assert!(!is_valid_double_windows(&vec!(2, 2, 3, 4, 5, 0)));
+    assert!(!is_valid_double_windows(&vec!(1, 2, 3, 7, 8, 9)));
+    assert!(!is_valid_double_windows(&vec!(1, 1, 1, 1, 2, 3)));
+    assert!(!is_valid_double_windows(&vec!(1, 1, 1, 1, 1, 1)));
+    assert!(!is_valid_double_windows(&vec!(1, 2, 3, 4, 4, 4)));
 }
 
 #[test]
