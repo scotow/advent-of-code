@@ -17,3 +17,21 @@ impl FromStr for Program {
         Ok(Program{ memory: memory })
     }
 }
+
+impl Program {
+    pub fn run(&mut self, input: i32) {
+        use crate::command::Command;
+        use crate::command::Resp::*;
+
+        let mut ptr: usize = 0;
+        loop {
+            let (cmd, moved) = Command::build(&self.memory[ptr..]);
+            ptr += moved as usize;
+            match cmd.run(&mut self.memory, input) {
+                None => (),
+                JumpTo(p) => ptr = p as usize,
+                Stop => break
+            }
+        }
+    } 
+}

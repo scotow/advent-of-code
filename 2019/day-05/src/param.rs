@@ -15,12 +15,12 @@ impl Param {
         }
     }
 
-    pub fn resolve(self, m: &mut [i32]) -> &mut i32 {
+    pub fn resolve(&self, m: &[i32]) -> i32 {
         use Param::*;
 
-        match self {
-            Position(i) => &mut m[i as usize],
-            Immediate(n) => &mut n
+        match *self {
+            Position(i) => m[i as usize],
+            Immediate(n) => n
         }
     }
 }
