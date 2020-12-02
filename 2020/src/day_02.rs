@@ -34,7 +34,7 @@ impl PolicyCheck {
     }
 
     fn satisfy_position(&self) -> bool {
-        vec![self.range.0, self.range.1].iter()
+        [self.range.0, self.range.1].iter()
             .filter(|&&i| self.password.chars().nth(i - 1).unwrap() == self.char)
             .count() == 1
     }

@@ -16,8 +16,8 @@ pub fn part2(input: &Vec<i32>) -> i32 {
 }
 
 fn find(input: &Vec<i32>, size: usize) -> i32 {
-    input.iter()
+    input.iter().copied()
         .combinations(size)
-        .find(|x| x.clone().into_iter().sum::<i32>() == 2020).unwrap()
-        .into_iter().product()
+        .find(|x| x.iter().sum::<i32>() == 2020).unwrap()
+        .iter().product()
 }
