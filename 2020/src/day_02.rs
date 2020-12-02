@@ -2,7 +2,7 @@ use itertools::Itertools;
 use std::str::FromStr;
 
 #[derive(Debug)]
-struct PolicyCheck {
+pub struct PolicyCheck {
     pub char: char,
     pub range: (usize, usize),
     pub password: String
@@ -40,13 +40,21 @@ impl PolicyCheck {
     }
 }
 
-fn main() {
-    println!("{}", aoc::parser::lines_from_args_as::<PolicyCheck>(1)
-        .filter(PolicyCheck::satisfy_range)
+#[aoc_generator(day2)]
+pub fn input_generator(input: &str) -> Vec<PolicyCheck> {
+    input.lines().filter_map(|l| l.parse().ok()).collect()
+}
+
+#[aoc(day2, part1)]
+pub fn part1(input: &Vec<PolicyCheck>) -> usize {
+    input.iter()
+        .filter(|p| p.satisfy_range())
         .count()
-    );
-    println!("{}", aoc::parser::lines_from_args_as::<PolicyCheck>(1)
-        .filter(PolicyCheck::satisfy_position)
+}
+
+#[aoc(day2, part2)]
+pub fn part2(input: &Vec<PolicyCheck>) -> usize {
+    input.iter()
+        .filter(|p| p.satisfy_position())
         .count()
-    );
 }
