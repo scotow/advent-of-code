@@ -24,12 +24,16 @@ pub fn part2(input: &[(i32, i32)]) -> usize {
         &input.iter().copied()
             .step_by(2)
             .collect_vec()
-    ).iter().copied().chain(
-        trace(&input.iter().copied()
-            .skip(1)
-            .step_by(2)
-            .collect_vec()
-        )).unique().count()
+    ).into_iter()
+        .chain(
+            trace(
+                &input.iter().copied()
+                    .skip(1)
+                    .step_by(2)
+                    .collect_vec()
+            )
+        ).unique()
+        .count()
 }
 
 pub fn trace(input: &[(i32, i32)]) -> Vec<(i32, i32)> {
