@@ -6,11 +6,10 @@ pub fn input_generator(input: &str) -> Vec<HashMap<String, String>> {
     input.split("\n\n")
         .map(|s| {
             s.split_whitespace()
-                .map(|l| l.split(":").map(str::to_string)
-                    .collect_tuple::<(_,_)>().unwrap())
+                .map(|l| l.split(":").map(str::to_string).collect_tuple::<(_, _)>().unwrap())
                 .collect::<HashMap<_, _>>()
         })
-        .collect_vec()
+        .collect()
 }
 
 #[aoc(day4, part1)]
@@ -44,7 +43,7 @@ fn is_field_valid(key: &str, value: &str) -> bool {
             "in" => matches!(value[..value.len()-2].parse().unwrap_or(-1), 59..=76),
             _ => false,
         },
-        "hcl" => value.len() == 7 && value.starts_with("#") && value[1..].chars().all(|c| c.is_ascii_hexdigit()),
+        "hcl" => value.len() == 7 && value.starts_with('#') && value[1..].chars().all(|c| c.is_ascii_hexdigit()),
         "ecl" => ["amb", "blu", "brn", "gry", "grn", "hzl", "oth"].contains(&value),
         "pid" => value.len() == 9 && value.chars().all(|c| c.is_ascii_digit()),
         "cid" => true,
