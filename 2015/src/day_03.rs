@@ -15,32 +15,27 @@ pub fn input_generator(input: &str) -> Vec<(i32, i32)> {
 
 #[aoc(day3, part1)]
 pub fn part1(input: &[(i32, i32)]) -> usize {
-    trace(input).iter().unique().count()
+    trace(input.iter().copied()).unique().count()
 }
 
 #[aoc(day3, part2)]
 pub fn part2(input: &[(i32, i32)]) -> usize {
     trace(
-        &input.iter().copied()
+        input.iter().copied()
             .step_by(2)
-            .collect_vec()
-    ).into_iter()
-        .chain(
-            trace(
-                &input.iter().copied()
-                    .skip(1)
-                    .step_by(2)
-                    .collect_vec()
-            )
-        ).unique()
-        .count()
+    ).chain(
+        trace(
+            input.iter().copied()
+                .skip(1)
+                .step_by(2)
+        )
+    ).unique().count()
 }
 
-pub fn trace(input: &[(i32, i32)]) -> Vec<(i32, i32)> {
-    input.iter()
+pub fn trace(input: impl Iterator<Item=(i32, i32)>) -> impl Iterator<Item=(i32, i32)> {
+    input
         .scan((0, 0), |(h, v), (mh, mv)| {
             *h += mh; *v += mv;
             Some((*h, *v))
         })
-        .collect()
 }
