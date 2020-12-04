@@ -5,7 +5,7 @@ use std::str::FromStr;
 pub struct PolicyCheck {
     pub char: char,
     pub range: (usize, usize),
-    pub password: String
+    pub password: String,
 }
 
 impl FromStr for PolicyCheck {
@@ -18,7 +18,7 @@ impl FromStr for PolicyCheck {
         Ok(Self {
             char: parts[2].chars().nth(0).unwrap(),
             range: (parts[0].parse().unwrap(), parts[1].parse().unwrap()),
-            password: parts[3].into()
+            password: parts[3].into(),
         })
     }
 }
