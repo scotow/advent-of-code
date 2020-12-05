@@ -1,25 +1,14 @@
 use itertools::Itertools;
 
-fn seat_id(input: &[char]) -> u16 {
-    let mut row = (0, 127);
-    let mut column = (0, 7);
-
-    input.iter()
-        .for_each(|c| match c {
-            'F' => row.1 -= (row.1 - row.0 + 1) / 2,
-            'B' => row.0 += (row.1 - row.0 + 1) / 2,
-            'L' => column.1 -= (column.1 - column.0) / 2,
-            'R' => column.0 += (column.1 - column.0 + 1) / 2,
-            _ => unreachable!()
-        });
-
-    row.0 * 8 + column.0
+fn seat_id(input: &str) -> u16 {
+    u16::from_str_radix(&input[..7].replace("F", "0").replace("B", "1"), 2).unwrap() * 8 +
+        u16::from_str_radix(&input[7..].replace("L", "0").replace("R", "1"), 2).unwrap()
 }
 
 #[aoc_generator(day5)]
 fn input_generator(input: &str) -> Vec<u16> {
     input.lines()
-        .map(|l| seat_id(&l.chars().collect_vec()))
+        .map(|l| seat_id(&l))
         .collect()
 }
 
