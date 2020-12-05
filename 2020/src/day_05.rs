@@ -1,8 +1,11 @@
 use itertools::Itertools;
 
 fn seat_id(input: &str) -> u16 {
-    u16::from_str_radix(&input[..7].replace("F", "0").replace("B", "1"), 2).unwrap() * 8 +
-        u16::from_str_radix(&input[7..].replace("L", "0").replace("R", "1"), 2).unwrap()
+    u16::from_str_radix(
+        &input
+            .replace(&['F', 'L'][..], "0")
+            .replace(&['B', 'R'][..], "1"),
+        2).unwrap()
 }
 
 #[aoc_generator(day5)]
