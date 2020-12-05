@@ -10,9 +10,7 @@ fn seat_id(input: &str) -> u16 {
 
 #[aoc_generator(day5)]
 fn input_generator(input: &str) -> Vec<u16> {
-    input.lines()
-        .map(|l| seat_id(&l))
-        .collect()
+    input.lines().map(seat_id).collect()
 }
 
 #[aoc(day5, part1)]
