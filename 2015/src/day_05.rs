@@ -1,23 +1,27 @@
 use itertools::Itertools;
 
-#[aoc(day4, part1)]
-pub fn part1(input: &str) -> u64 {
-    solve(input, 5)
+#[aoc(day5, part1)]
+pub fn part1(input: &str) -> usize {
+    input.lines().filter(|l| is_nice_string_1(l)).count()
 }
 
-#[aoc(day4, part2)]
-pub fn part2(input: &str) -> u64 {
-    solve(input, 6)
+#[aoc(day5, part2)]
+pub fn part2(input: &str) -> usize {
+    input.lines().filter(|l| is_nice_string_2(l)).count()
 }
 
-fn solve(input: &str, length: usize) -> u64 {
-    (1..)
-        .map(|n| (n, md5::compute(format!("{}{}", input, n)).iter()
-            .flat_map(|&n| vec![n & 0xF0, n & 0x0F])
-            .collect_vec()
-        ))
-        .filter(|(_, d)| d.iter()
-            .zip(vec![0; length])
-            .all(|(l, r)| l | r == 0))
-        .nth(0).unwrap().0
+fn is_nice_string_1(input: &str) -> bool {
+    input.chars().filter(|c| ['a', 'e', 'i', 'o', 'u'].contains(c)).count() >= 3 &&
+        input.chars().tuple_windows().any(|(a, b)| a == b) &&
+        ["ab", "cb", "pq", "xy"].iter().all(|&s| !input.contains(s))
+}
+
+fn is_nice_string_2(input: &str) -> bool {
+    input.chars()
+        .tuple_windows::<(_, _)>()
+        .enumerate()
+        .any(|(i, (a, b))| input[(i+2)..].contains(&[a, b].iter().collect::<String>())) &&
+        input.chars()
+            .tuple_windows()
+            .any(|(x, _, z)| x == z)
 }
