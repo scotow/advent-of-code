@@ -1,6 +1,5 @@
-use itertools::{iproduct, max};
+use itertools::iproduct;
 use itertools::Itertools;
-use std::cmp::min;
 
 #[aoc_generator(day6)]
 pub fn input_generator(input: &str) -> Vec<(usize, usize, u8)> {
@@ -26,38 +25,35 @@ fn turn_off(l: &mut u32) { *l &= 0 }
 fn toggle(l: &mut u32) { *l ^= 1 }
 
 fn increase(l: &mut u32) { *l += 1 }
-fn decrease(l: &mut u32) { *l = if *l == 0 { 0 } else { *l - 1 } }
+fn decrease(l: &mut u32) { *l = l.saturating_sub(1) }
 fn increase2(l: &mut u32) { *l += 2 }
 
 #[aoc(day6, part1)]
 pub fn part1(input: &Vec<(usize, usize, u8)>) -> u32 {
-    let mut grid = [[0u32; 1000]; 1000];
-    input.iter()
-        .map(|(x, y, a)| (x, y, match a {
-            0 => turn_on,
-            1 => turn_off,
-            2 => toggle,
-            _ => unreachable!(),
-        }))
-        .for_each(|(&x, &y, a)| {
-            a(&mut grid[y][x]);
-        });
-
-    grid.iter()
-        .flat_map(|r| r.iter())
-        .sum()
+    solve(input, |a| match a {
+        0 => turn_on,
+        1 => turn_off,
+        2 => toggle,
+        _ => unreachable!(),
+    })
 }
 
 #[aoc(day6, part2)]
 pub fn part2(input: &Vec<(usize, usize, u8)>) -> u32 {
+    solve(input, |a| match a {
+        0 => increase,
+        1 => decrease,
+        2 => increase2,
+        _ => unreachable!(),
+    })
+}
+
+fn solve<F>(input: &Vec<(usize, usize, u8)>, matcher: F) -> u32
+where F: Fn(u8) -> fn(&mut u32)
+{
     let mut grid = [[0u32; 1000]; 1000];
     input.iter()
-        .map(|(x, y, a)| (x, y, match a {
-            0 => increase,
-            1 => decrease,
-            2 => increase2,
-            _ => unreachable!(),
-        }))
+        .map(|(x, y, a)| (x, y, matcher(*a)))
         .for_each(|(&x, &y, a)| {
             a(&mut grid[y][x]);
         });
