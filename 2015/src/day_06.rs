@@ -1,25 +1,68 @@
+use itertools::{iproduct, max};
 use itertools::Itertools;
+use std::cmp::min;
 
 #[aoc_generator(day6)]
-pub fn input_generator(input: &str) -> Vec<((usize, usize, fn(&mut u8)))> {
+pub fn input_generator(input: &str) -> Vec<(usize, usize, u8)> {
     input.lines()
         .map(|l| l.rsplitn(4, ' ').flat_map(|l| l.split(',')).collect_vec())
-        .map(|l| (/*match l[5] {
-            "turn on" => turn_on,
-            "turn off" => turn_off,
-            "toggle" => toggle,
-            _ => unreachable!()
-        }*/ (l[3].parse::<usize>().unwrap()..l[0].parse::<usize>().unwrap()).flat_map(|r| )))
-        .for_each(|l| println!("{:?}", l));
-
-    vec![]
+        .map(|l| (match l[5] {
+            "turn on" => 0,
+            "turn off" => 1,
+            "toggle" => 2,
+            _ => unreachable!(),
+        }, l))
+        .flat_map(|(a, l)| {
+            iproduct!(
+                l[3].parse::<usize>().unwrap()..=l[0].parse::<usize>().unwrap(),
+                l[4].parse::<usize>().unwrap()..=l[1].parse::<usize>().unwrap()
+            ).map(move |(x, y)| (x, y, a))
+        })
+        .collect()
 }
 
-fn turn_on(l: &mut u8) { *l |= 1 }
-fn turn_off(l: &mut u8) { *l &= 1 }
-fn toggle(l: &mut u8) { *l ^= 1 }
+fn turn_on(l: &mut u32) { *l |= 1 }
+fn turn_off(l: &mut u32) { *l &= 0 }
+fn toggle(l: &mut u32) { *l ^= 1 }
+
+fn increase(l: &mut u32) { *l += 1 }
+fn decrease(l: &mut u32) { *l = if *l == 0 { 0 } else { *l - 1 } }
+fn increase2(l: &mut u32) { *l += 2 }
 
 #[aoc(day6, part1)]
-pub fn part1(input: &Vec<((usize, usize, fn(&mut u8)))>) -> usize {
-    0
+pub fn part1(input: &Vec<(usize, usize, u8)>) -> u32 {
+    let mut grid = [[0u32; 1000]; 1000];
+    input.iter()
+        .map(|(x, y, a)| (x, y, match a {
+            0 => turn_on,
+            1 => turn_off,
+            2 => toggle,
+            _ => unreachable!(),
+        }))
+        .for_each(|(&x, &y, a)| {
+            a(&mut grid[y][x]);
+        });
+
+    grid.iter()
+        .flat_map(|r| r.iter())
+        .sum()
+}
+
+#[aoc(day6, part2)]
+pub fn part2(input: &Vec<(usize, usize, u8)>) -> u32 {
+    let mut grid = [[0u32; 1000]; 1000];
+    input.iter()
+        .map(|(x, y, a)| (x, y, match a {
+            0 => increase,
+            1 => decrease,
+            2 => increase2,
+            _ => unreachable!(),
+        }))
+        .for_each(|(&x, &y, a)| {
+            a(&mut grid[y][x]);
+        });
+
+    grid.iter()
+        .flat_map(|r| r.iter())
+        .sum()
 }
