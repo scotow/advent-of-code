@@ -16,6 +16,7 @@ impl Action {
             Acc => acc,
             Jmp => jmp,
             Nop => nop,
+            _ => unreachable!(),
         }
     }
 }
