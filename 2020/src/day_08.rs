@@ -11,7 +11,6 @@ pub enum Action {
 }
 
 impl Action {
-
     fn to_fn(&self) -> fn(&mut usize, &mut i32, i32) {
         match self {
             Acc => acc,
