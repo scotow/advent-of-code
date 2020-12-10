@@ -9,68 +9,36 @@ pub fn input_generator(input: &str) -> Vec<u64> {
 
 #[aoc(day9, part1)]
 fn part1(input: &Vec<u64>) -> u64 {
-    next_invalid(input).1
+    solve(input)
 }
 
-oc(day9, part2)]
+#[aoc(day9, part2)]
 fn part2(input: &Vec<u64>) -> u64 {
-    let res = input.iter()
+    let invalid = solve(input);
+    let (start, size, _) = input.iter()
         .enumerate()
-        .skip(PREAMBLE)
-        .filter(|(i, n)| {
-            is_invalid(&input[..=*i])
-        })
-        .map(|x| dbg!(x))
-        .tuple_windows()
-        .map(|x| dbg!(x))
-        .filter(|((i1, _), (i2, _))| *i2 == i1 + 1)
-        .take_while(|((i1, _), (i2, _))| *i2 == i1 + 1)
-        .collect_vec();
-    // .flat_map(|((_, n1), (_, n2))| vec![n1, n2].into_iter())
-    // .minmax().into_option().unwrap();
-
-    dbg!(res);
-    // res.0 + res.1
-    0
-}
-
-// #[aoc(day9, part2)]
-// fn part2(input: &Vec<u64>) -> u64 {
-//     let res = input.iter()
-//         .enumerate()
-//         .skip(PREAMBLE)
-//         .filter(|(i, n)| {
-//             is_invalid(&input[..=*i])
-//         })
-//         .map(|x| dbg!(x))
-//         .tuple_windows()
-//         .map(|x| dbg!(x))
-//         .filter(|((i1, _), (i2, _))| *i2 == i1 + 1)
-//         .take_while(|((i1, _), (i2, _))| *i2 == i1 + 1)
-//         .collect_vec();
-//         // .flat_map(|((_, n1), (_, n2))| vec![n1, n2].into_iter())
-//         // .minmax().into_option().unwrap();
-//
-//     dbg!(res);
-//     // res.0 + res.1
-//     0
-// }
-
-fn next_invalid(input: &[u64]) -> (usize, u64) {
-    let res = input.iter()
-        .enumerate()
-        .skip(PREAMBLE)
-        .find(|(i, n)| {
-            // dbg!(..*i, n);
-            is_invalid(&input[..=*i])
+        .find_map(|(i, _)| {
+            input[i..].iter()
+                .enumerate()
+                .scan(0, |s, (j, &n)| {
+                    *s = *s + n;
+                    if *s <= invalid { Some((i, j, *s)) } else { None }
+                })
+                .filter(|&(_, _, n)| n == invalid)
+                .last()
         }).unwrap();
-    (res.0, *res.1)
+
+    let (&min, &max) = input[start..=start+size].iter().minmax().into_option().unwrap();
+    min + max
 }
 
-fn is_invalid(input: &[u64]) -> bool {
-    let (value, end) = (input[input.len() - 1], input.len() - 1);
-    // dbg!(value, index, input.len(), index-5..index, input[index-5..index].iter().collect_vec());
-    !input[end-PREAMBLE..end].iter()
-        .combinations(2)
-        .any(|v| v[0] + v[1] == value)
+fn solve(input: &[u64]) -> u64 {
+    *input.iter()
+        .enumerate()
+        .skip(PREAMBLE)
+        .find(|&(i, n)| {
+            !input[i-PREAMBLE..i].iter()
+                .combinations(2)
+                .any(|v| v[0] + v[1] == *n)
+        }).unwrap().1
 }
