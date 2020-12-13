@@ -1,64 +1,119 @@
-use itertools::iproduct;
 use itertools::Itertools;
+use std::str::FromStr;
+use crate::day_07::Value::*;
+use std::collections::HashMap;
 
-#[aoc_generator(day6)]
-pub fn input_generator(input: &str) -> Vec<(usize, usize, u8)> {
+type Action = (Value, Option<Value>, fn(u16, Option<u16>) -> u16, String);
+
+pub fn parse_action(line: &str) -> Action {
+    let (left, right) = line.split(" -> ").collect_tuple().unwrap();
+    let left = left.split(' ').collect_vec();
+
+    let func: fn(u16, Option<u16>) -> u16;
+    let lhs: Value; let rhs: Option<Value>;
+    match left.len() {
+        1 => { func = assign; lhs = left[0].parse().unwrap(); rhs = None; },
+        2 => { func = not; lhs = left[1].parse().unwrap(); rhs = None; },
+        3 => {
+            func = match left[1] {
+                "AND" => and,
+                "OR" => or,
+                "LSHIFT" => lshift,
+                "RSHIFT" => rshift,
+                _ => unreachable!(),
+            };
+            lhs = left[0].parse().unwrap();
+            rhs = Some(left[2].parse().unwrap());
+        },
+        _ => unreachable!(),
+    }
+
+    // dbg!(lhs, rhs, left, right);
+    (lhs, rhs, func, right.to_string())
+}
+
+fn assign(lhs: u16, _rhs: Option<u16>) -> u16 { lhs }
+fn not(lhs: u16, _rhs: Option<u16>) -> u16 { !lhs }
+fn and(lhs: u16, rhs: Option<u16>) -> u16 { lhs & rhs.unwrap() }
+fn or(lhs: u16, rhs: Option<u16>) -> u16 { lhs | rhs.unwrap() }
+fn lshift(lhs: u16, rhs: Option<u16>) -> u16 { lhs << rhs.unwrap() }
+fn rshift(lhs: u16, rhs: Option<u16>) -> u16 { lhs >> rhs.unwrap() }
+
+#[derive(Debug, Clone)]
+pub enum Value {
+    Direct(u16),
+    Variable(String),
+}
+
+impl FromStr for Value {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(
+            match s.parse::<u16>() {
+                Ok(n) => Direct(n),
+                Err(_) => Variable(s.to_string()),
+            }
+        )
+    }
+}
+
+#[aoc_generator(day7)]
+pub fn input_generator(input: &str) -> Vec<Action> {
     input.lines()
-        .map(|l| l.rsplitn(4, ' ').flat_map(|l| l.split(',')).collect_vec())
-        .map(|l| (match l[5] {
-            "turn on" => 0,
-            "turn off" => 1,
-            "toggle" => 2,
-            _ => unreachable!(),
-        }, l))
-        .flat_map(|(a, l)| {
-            iproduct!(
-                l[3].parse::<usize>().unwrap()..=l[0].parse::<usize>().unwrap(),
-                l[4].parse::<usize>().unwrap()..=l[1].parse::<usize>().unwrap()
-            ).map(move |(x, y)| (x, y, a))
-        })
+        .map(parse_action)
         .collect()
 }
 
-fn turn_on(l: &mut u32) { *l |= 1 }
-fn turn_off(l: &mut u32) { *l &= 0 }
-fn toggle(l: &mut u32) { *l ^= 1 }
-
-fn increase(l: &mut u32) { *l += 1 }
-fn decrease(l: &mut u32) { *l = l.saturating_sub(1) }
-fn increase2(l: &mut u32) { *l += 2 }
-
-#[aoc(day6, part1)]
-pub fn part1(input: &Vec<(usize, usize, u8)>) -> u32 {
-    solve(input, |a| match a {
-        0 => turn_on,
-        1 => turn_off,
-        2 => toggle,
-        _ => unreachable!(),
-    })
+#[aoc(day7, part1)]
+pub fn part1(input: &Vec<Action>) -> u16 {
+    solve(&input)
 }
 
-#[aoc(day6, part2)]
-pub fn part2(input: &Vec<(usize, usize, u8)>) -> u32 {
-    solve(input, |a| match a {
-        0 => increase,
-        1 => decrease,
-        2 => increase2,
-        _ => unreachable!(),
-    })
+#[aoc(day7, part2)]
+pub fn part2(input: &Vec<Action>) -> u16 {
+    let a = solve(&input);
+    let mut actions = input.iter()
+        .filter(|act| act.3 != "b")
+        .cloned()
+        .collect_vec();
+    actions.insert(0, (Value::Direct(a), None, assign, "b".to_string()));
+
+    solve(&actions)
 }
 
-fn solve<F>(input: &Vec<(usize, usize, u8)>, matcher: F) -> u32
-where F: Fn(u8) -> fn(&mut u32)
-{
-    let mut grid = [[0u32; 1000]; 1000];
-    input.iter()
-        .map(|(x, y, a)| (x, y, matcher(*a)))
-        .for_each(|(&x, &y, a)| {
-            a(&mut grid[y][x]);
-        });
+pub fn solve(input: &[Action]) -> u16 {
+    let mut values = HashMap::new();
+    while !values.contains_key("a") {
+        input.iter()
+            .for_each(|(lhs, rhs, action, dest)| {
+                match resolve(&values, &lhs) {
+                    None => return,
+                    Some(vl) => {
+                        match rhs {
+                            None => {
+                                values.insert(dest.clone(), action(vl, None));
+                            }
+                            Some(rhs) => {
+                                match resolve(&values, rhs) {
+                                    None => return,
+                                    Some(vr) => {
+                                        values.insert(dest.clone(), action(vl, Some(vr)));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+    }
 
-    grid.iter()
-        .flat_map(|r| r.iter())
-        .sum()
+    values["a"]
+}
+
+pub fn resolve(values: &HashMap<String, u16>, v: &Value) -> Option<u16> {
+    match v {
+        Direct(n) => Some(*n),
+        Variable(k) => values.get(k).copied(),
+    }
 }
