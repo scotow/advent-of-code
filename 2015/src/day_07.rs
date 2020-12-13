@@ -28,7 +28,6 @@ pub fn parse_action(line: &str) -> Action {
         _ => unreachable!(),
     }
 
-    // dbg!(lhs, rhs, left, right);
     (lhs, rhs, func, right.to_string())
 }
 
@@ -87,24 +86,20 @@ pub fn solve(input: &[Action]) -> u16 {
     while !values.contains_key("a") {
         input.iter()
             .for_each(|(lhs, rhs, action, dest)| {
-                match resolve(&values, &lhs) {
+                let lhs = match resolve(&values, lhs) {
+                    Some(v) => v,
                     None => return,
-                    Some(vl) => {
-                        match rhs {
-                            None => {
-                                values.insert(dest.clone(), action(vl, None));
-                            }
-                            Some(rhs) => {
-                                match resolve(&values, rhs) {
-                                    None => return,
-                                    Some(vr) => {
-                                        values.insert(dest.clone(), action(vl, Some(vr)));
-                                    }
-                                }
-                            }
+                };
+                let rhs = match rhs {
+                    None => None,
+                    Some(rhs) => {
+                        match resolve(&values, rhs) {
+                            None => return,
+                            Some(v) => Some(v)
                         }
                     }
-                }
+                };
+                values.insert(dest.clone(), action(lhs, rhs));
             });
     }
 
