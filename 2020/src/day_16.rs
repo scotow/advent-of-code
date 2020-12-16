@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use itertools::Itertools;
 
 #[aoc_generator(day15)]
 fn input_generator(input: &str) -> Vec<usize> {
