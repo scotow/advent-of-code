@@ -1,37 +1,38 @@
-use std::collections::HashMap;
 use itertools::Itertools;
 
-#[aoc_generator(day9)]
-fn input_generator(input: &str) -> HashMap<String, HashMap<String, u64>> {
-    let mut map = HashMap::new();
-    input.lines()
-        .map(|l| l.split(' ').collect_vec())
-        .map(|p| (p[0].to_string(), p[2].to_string(), p[4].parse::<u64>().unwrap()))
-        .for_each(|(from, to, dist)| {
-            map.entry(from.clone()).or_insert(HashMap::new()).insert(to.clone(), dist);
-            map.entry(to).or_insert(HashMap::new()).insert(from, dist);
-        });
-
-    map
+#[aoc_generator(day10)]
+fn input_generator(input: &str) -> Vec<char> {
+    input.chars()
+        .collect()
 }
 
-#[aoc(day9, part1)]
-fn part1(input: &HashMap<String, HashMap<String, u64>>) -> Option<u64> {
-    solver(input).min()
+#[aoc(day10, part1)]
+fn part1(input: &Vec<char>) -> usize {
+    solve(input, 40)
 }
 
-#[aoc(day9, part2)]
-fn part2(input: &HashMap<String, HashMap<String, u64>>) -> Option<u64> {
-    solver(input).max()
+#[aoc(day10, part2)]
+fn part2(input: &Vec<char>) -> usize {
+    solve(input, 50)
 }
 
-fn solver<'a>(input: &'a HashMap<String, HashMap<String, u64>>) -> impl Iterator<Item=u64> + 'a {
-    input.keys()
-        .permutations(input.len())
-        .map(move |cs| {
-            cs.iter()
-                .tuple_windows()
-                .map(|(c1, c2)| input.get(c1.clone()).unwrap().get(c2.clone()).unwrap())
-                .sum()
+fn solve(start: &Vec<char>, t: usize) -> usize {
+    (0..t)
+        .fold(start.clone(), |acc, _| extend(&acc))
+        .into_iter().collect::<String>()
+        .len()
+}
+
+fn extend(input: &[char]) -> Vec<char> {
+    input.iter()
+        .map(|c| (1, *c))
+        .coalesce(|(n1, c1), (n2, c2)| {
+            if c1 == c2 {
+                Ok((n1 + n2, c1))
+            } else {
+                Err(((n1, c1), (n2, c2)))
+            }
         })
+        .flat_map(|(n, c)| format!("{}{}", n, c).chars().collect_vec())
+        .collect()
 }
