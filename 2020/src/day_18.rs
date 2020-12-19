@@ -1,11 +1,10 @@
-// use Value::*;
 use Part::*;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 enum Part {
     Empty,
     Number(u64),
-    Raw(u8),
+    Opp(u8),
 }
 
 #[aoc_generator(day18)]
@@ -16,24 +15,27 @@ fn input_generator(input: &str) -> Vec<Vec<u8>> {
 #[aoc(day18, part1)]
 fn part1(input: &[Vec<u8>]) -> u64 {
     input.iter()
-        .map(|l| solve(l))
+        .map(|l| solve(l, false))
         .sum()
-    // let mut input = input[0].clone();
-    // input.reverse();
-    // let v = parse(&input).0;
-    // dbg!(v);
 }
 
-fn solve(input: &[u8]) -> u64 {
-    dbg!(std::str::from_utf8(&input));
+#[aoc(day18, part2)]
+fn part2(input: &[Vec<u8>]) -> u64 {
+    input.iter()
+        .map(|l| solve(l, true))
+        .sum()
+}
 
+fn solve(input: &[u8], prioritize_add: bool) -> u64 {
     let mut exp: Vec<Part> = vec![Empty; input.len()];
+
+    // Resolve sub expressions, numbers and opps.
     let mut i = 0;
     while i < input.len() {
         match input[i] {
             b'(' => {
                 let end = i + find_close(&input[i..]);
-                exp[i] = Number(solve(&input[i + 1..end - 1]));
+                exp[i] = Number(solve(&input[i + 1..end - 1], prioritize_add));
                 i = end;
             },
             c @ b'0'..=b'9' => {
@@ -41,13 +43,37 @@ fn solve(input: &[u8]) -> u64 {
                 i += 1;
             },
             c @ b'+' | c @ b'*' => {
-                exp[i] = Raw(c);
+                exp[i] = Opp(c);
                 i += 1;
             },
             _ => unreachable!(),
         }
     }
 
+    // Clean spaces.
+    exp = exp.into_iter()
+        .filter(|p| !matches!(p, Empty))
+        .collect();
+
+    // Resolve additions if required.
+    if prioritize_add {
+        while exp.contains(&Opp(b'+')) {
+            let mut i = 0;
+            while exp.len() > 2 && i < exp.len() - 2 {
+                match (exp[i], exp[i + 1], exp[i + 2]) {
+                    (Number(n), Opp(b'+'), Number(m)) => {
+                        exp[i] = Number(n + m);
+                        exp.remove(i + 2);
+                        exp.remove(i + 1);
+                    },
+                    _ => (),
+                }
+                i += 1;
+            }
+        };
+    }
+
+    // Resolve left to right.
     let mut res = 0;
     let mut opp: fn(u64, u64) -> u64 = std::ops::Add::add;
     exp.iter()
@@ -55,8 +81,8 @@ fn solve(input: &[u8]) -> u64 {
         .for_each(|&p| {
             match p {
                 Number(n) => res = opp(res, n),
-                Raw(b'+') => opp = std::ops::Add::add,
-                Raw(b'*') => opp = std::ops::Mul::mul,
+                Opp(b'+') => opp = std::ops::Add::add,
+                Opp(b'*') => opp = std::ops::Mul::mul,
                 _ => unreachable!(),
             }
         });
