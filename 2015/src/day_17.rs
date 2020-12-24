@@ -1,4 +1,11 @@
 use itertools::Itertools;
+use std::collections::HashMap;
+
+fn matching(containers: &[u16]) -> impl Iterator<Item=Vec<u16>> {
+    containers.iter().map(|&c| (0..=c).step_by(c as usize))
+        .multi_cartesian_product()
+        .filter(|cs| cs.iter().sum::<u16>() == 150)
+}
 
 #[aoc_generator(day17)]
 fn input_generator(input: &str) -> Vec<u16> {
@@ -9,23 +16,15 @@ fn input_generator(input: &str) -> Vec<u16> {
 
 #[aoc(day17, part1)]
 fn part1(containers: &[u16]) -> usize {
-    containers.iter().map(|&c| (0..=c).step_by(c as usize))
-        .multi_cartesian_product()
-        .filter(|cs| cs.iter().sum::<u16>() == 150)
-        .count()
+    matching(containers).count()
 }
 
 #[aoc(day17, part2)]
 fn part2(containers: &[u16]) -> usize {
-    let min = containers.iter().map(|&c| (0..=c).step_by(c as usize))
-        .multi_cartesian_product()
-        .filter(|cs| cs.iter().sum::<u16>() == 150)
+    let mut mapping = HashMap::new();
+    matching(containers)
         .map(|cs| cs.iter().filter(|&&c| c != 0).count())
-        .min().unwrap();
+        .for_each(|n| *mapping.entry(n).or_insert(0) += 1);
 
-    containers.iter().map(|&c| (0..=c).step_by(c as usize))
-        .multi_cartesian_product()
-        .filter(|cs| cs.iter().sum::<u16>() == 150)
-        .filter(|cs| cs.iter().filter(|&&c| c != 0).count() == min)
-        .count()
+    *mapping.iter().min().unwrap().1
 }
