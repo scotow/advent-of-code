@@ -6,24 +6,15 @@ pub fn input_generator(input: &str) -> Vec<u32> {
 fn solve(circle: &mut Vec<u32>, moves: usize) {
     let mut current = circle[0];
     let mut current_index = 0;
-    for n in 0..moves {
-        if n % 100_000 == 0 {
-            dbg!(n);
-        }
-        // println!("-- move {} --", n + 1);
-        // println!("{:?}", circle);
-        // println!("current: {}", current);
-
+    for _ in 0..moves {
         let mut picked = Vec::with_capacity(3);
         for _ in 1..=3 {
             let pick_index = (current_index + 1) % circle.len();
             if pick_index < current_index {
                 current_index -= 1;
             }
-            // let current_index = circle.iter().position(|&c| c == current).unwrap();
             picked.push(circle.remove(pick_index));
         }
-        // println!("pick up: {:?}", picked);
 
         let mut destination = current - 1;
         loop {
@@ -36,16 +27,12 @@ fn solve(circle: &mut Vec<u32>, moves: usize) {
                 destination -= 1;
             }
         };
-        // println!("destination: {:?}", destination);
-        //
-        // println!("{}", current_index);
+
         let destination_index = circle.iter().position(|&c| c == destination).unwrap();
         for (i, c) in picked.into_iter().enumerate() {
             circle.insert(destination_index + 1 + i, c);
             if destination_index < current_index {
                 current_index += 1;
-                // println!("{}", current_index);
-                // println!("{:?}", circle);
             }
         }
 
