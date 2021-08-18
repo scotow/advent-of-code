@@ -57,14 +57,11 @@ pub fn part2((replacements, molecule): &(HashMap<String, Vec<String>>, String)) 
     }
 
     let mut rng = rand::thread_rng();
-    let mut tentatives = 0;
-    let mut best = usize::MAX;
-    while tentatives < 100 {
-        replacements.shuffle(&mut rng);
-        if let Some(n) = try_solve(molecule.clone(), &replacements) {
-            best = best.min(n);
-            tentatives += 1;
-        }
-    }
-    best
+    (0..)
+        .filter_map(|_| {
+            replacements.shuffle(&mut rng);
+            try_solve(molecule.clone(), &replacements)
+        })
+        .take(100)
+        .min().unwrap()
 }
