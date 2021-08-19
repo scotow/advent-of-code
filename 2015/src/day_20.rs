@@ -5,22 +5,31 @@ pub fn input_generator(input: &str) -> usize {
 
 #[aoc(day20, part1)]
 pub fn part1(input: &usize) -> usize {
-    for h in 1.. {
-        let mut c = 0;
-        for e in 1.. {
-            if h % e == 0 {
-                c += e* 10;
-            }
-            if c == *input {
-                return h;
-            }
-            if c > *input || e > h {
-                if h % 1000 == 0 {
-                    dbg!(h);
-                }
-                break;
-            }
+    let target = *input / 10;
+    let mut houses = vec![0; target + 1];
+    for e in 1..=target {
+        for h in (e..=target).step_by(e) {
+            houses[h] += e;
         }
     }
-    unreachable!();
+    find_first(&houses, target)
+}
+
+#[aoc(day20, part2)]
+pub fn part2(input: &usize) -> usize {
+    let target = *input;
+    let mut houses = vec![0; target + 1];
+    for e in 1..=target {
+        for h in (e..=target).step_by(e).take(50) {
+            houses[h] += e * 11;
+        }
+    }
+    find_first(&houses, target)
+}
+
+fn find_first(houses: &Vec<usize>, target: usize) -> usize {
+    houses.iter()
+        .enumerate()
+        .find(|&(_, &h)| h >= target)
+        .unwrap().0
 }
