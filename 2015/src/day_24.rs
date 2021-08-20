@@ -1,47 +1,59 @@
+use itertools::Itertools;
+use std::collections::HashSet;
+
 #[aoc_generator(day24)]
-pub fn input_generator(input: &str) -> Vec<u16> {
+pub fn input_generator(input: &str) -> HashSet<u64> {
     input.lines()
         .map(|l| l.parse().unwrap())
         .collect()
 }
 
 #[aoc(day24, part1)]
-pub fn part1(input: &[u16]) -> u16 {
-    let group_weight = input.iter().sum::<u16>() / 3;
-    let input = input.to_vec();
-    // input.reverse();
-    solve(group_weight, input, Vec::new(), Vec::new(), Vec::new()).unwrap().1
+pub fn part1(input: &HashSet<u64>) -> u64 {
+    solve(input, 3)
 }
 
-fn solve(group_weight: u16, mut r: Vec<u16>, g1: Vec<u16>, g2: Vec<u16>, g3: Vec<u16>) -> Option<(usize, u16)> {
-    if r.is_empty() {
-        if g1.iter().sum::<u16>() == group_weight && g2.iter().sum::<u16>() == group_weight && g3.iter().sum::<u16>() == group_weight {
-            return Some((g1.len(), g1.iter().product()));
-        } else {
-            return None;
+#[aoc(day24, part2)]
+pub fn part2(input: &HashSet<u64>) -> u64 {
+    solve(input, 4)
+}
+
+fn solve(input: &HashSet<u64>, split: u64) -> u64 {
+    let group_weight = input.iter().sum::<u64>() / split;
+    for n in 1..=input.len() {
+        let groups = input.iter()
+            .copied()
+            .combinations(n)
+            .filter(|g| g.iter().sum::<u64>() == group_weight)
+            .filter(|g| can_form_others(input, g, group_weight))
+            .collect_vec();
+        if !groups.is_empty() {
+            return groups.iter()
+                .map(|g| g.iter().product())
+                .min().unwrap()
         }
     }
+    unreachable!();
+}
 
-    if g1.iter().sum::<u16>() > group_weight || g2.iter().sum::<u16>() > group_weight || g3.iter().sum::<u16>() > group_weight {
-        return None;
+// This verification doesn't seem necessary because every input given doesn't need to form g2/g3/g4 for its best quantum entanglement.
+fn can_form_others(all: &HashSet<u64>, used: &[u64], group_weight: u64) -> bool {
+    let mut rem = all.clone();
+    for g in used {
+        rem.remove(g);
+    }
+    if rem.is_empty() {
+        return true;
     }
 
-    let gift = r.pop().unwrap();
-    [
-        {
-            let mut g1 = g1.clone();
-            g1.push(gift);
-            solve(group_weight, r.clone(), g1, g2.clone(), g3.clone())
-        },
-        {
-            let mut g2 = g2.clone();
-            g2.push(gift);
-            solve(group_weight, r.clone(), g1.clone(), g2, g3.clone())
-        },
-        {
-            let mut g3 = g3.clone();
-            g3.push(gift);
-            solve(group_weight, r.clone(), g1.clone(), g2.clone(), g3)
+    for n in 1..=rem.len() {
+        if rem.iter()
+            .copied()
+            .combinations(n)
+            .filter(|g| g.iter().sum::<u64>() == group_weight)
+            .any(|g| can_form_others(&rem, &g, group_weight)) {
+            return true;
         }
-    ].iter().filter_map(|&c| c).min()
+    }
+    false
 }
