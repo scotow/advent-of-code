@@ -2,11 +2,16 @@ use itertools::Itertools;
 
 #[aoc(day9, part1)]
 pub fn part1(input: &str) -> usize {
-    decompress(input.as_bytes()).len()
+    decompressed(input.as_bytes(), false)
 }
 
-fn decompress(input: &[u8]) -> Vec<u8> {
-    let mut decompressed = Vec::new();
+#[aoc(day9, part2)]
+pub fn part2(input: &str) -> usize {
+    decompressed(input.as_bytes(), true)
+}
+
+fn decompressed(input: &[u8], recursive: bool) -> usize {
+    let mut count = 0;
     let mut index = 0;
     while index < input.len() {
         if input[index] == b'(' {
@@ -17,15 +22,16 @@ fn decompress(input: &[u8]) -> Vec<u8> {
             let (length, times) = marker.split('x').map(|n| n.parse::<usize>().unwrap()).collect_tuple().unwrap();
             index += marker_length + 1;
 
-            let copy = &input[index..index + length];
-            for _ in 0..times {
-                decompressed.extend_from_slice(copy);
-            }
+            count += times * if recursive {
+                decompressed(&input[index..index + length], true)
+            } else {
+                length
+            };
             index += length;
         } else {
-            decompressed.push(input[index]);
             index += 1;
+            count += 1;
         }
     }
-    decompressed
+    count
 }
