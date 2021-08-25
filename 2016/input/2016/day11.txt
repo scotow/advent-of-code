@@ -1,4 +1,4 @@
-.
-lithium-compatible microchip The third floor contains a lithium generator.
+The first floor contains a hydrogen-compatible microchip and a lithium-compatible microchip.
+The first floor contains a  and a gold-compatible microchip.
 .
 The fourth floor contains nothing relevant.
