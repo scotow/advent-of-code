@@ -2,7 +2,7 @@ use itertools::Itertools;
 use std::convert::TryInto;
 use Component::*;
 use std::hash::{Hash, Hasher};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub struct Building {
@@ -122,15 +122,19 @@ pub fn input_generator(input: &str) -> Building {
 #[aoc(day11, part1)]
 pub fn part1(building: &Building) -> usize {
     // dbg!(building);
-    let mut visited = HashSet::new();
+    let mut visited = HashMap::new();
     solve(&mut visited, building.clone(), 0).unwrap()
 }
 
-fn solve(visited: &mut HashSet<Building>, building: Building, elevator_uses: usize) -> Option<usize> {
-    if visited.contains(&building) {
-        return None;
+fn solve(visited: &mut HashMap<Building, usize>, building: Building, elevator_uses: usize) -> Option<usize> {
+    if let Some(cached_visited) = visited.get_mut(&building) {
+        if elevator_uses < *cached_visited {
+            *cached_visited = elevator_uses;
+        } else {
+            return None;
+        }
     } else {
-        visited.insert(building.clone());
+        visited.insert(building.clone(), elevator_uses);
     }
     if !building.is_valid() {
         return None;
@@ -139,7 +143,7 @@ fn solve(visited: &mut HashSet<Building>, building: Building, elevator_uses: usi
         return Some(elevator_uses);
     }
 
-    dbg!(&building, elevator_uses);
+    // dbg!(&building, elevator_uses, building.current_floor().len());
 
     let mut solutions = Vec::new();
     // Up.
