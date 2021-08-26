@@ -122,74 +122,89 @@ pub fn input_generator(input: &str) -> Building {
 #[aoc(day11, part1)]
 pub fn part1(building: &Building) -> usize {
     // dbg!(building);
-    let mut visited = HashMap::new();
-    solve(&mut visited, building.clone(), 0).unwrap()
+    solve(building.clone())
 }
 
-fn solve(visited: &mut HashMap<Building, usize>, building: Building, elevator_uses: usize) -> Option<usize> {
-    if let Some(cached_visited) = visited.get_mut(&building) {
-        if elevator_uses < *cached_visited {
-            *cached_visited = elevator_uses;
-        } else {
-            return None;
+fn solve(initial: Building) -> usize {
+    let mut elevator_used = 0;
+    let mut visited = HashSet::new();
+    let mut queue = vec![initial];
+
+    loop {
+        let building = queue.pop().unwrap();
+        if visited.contains(&building) {
+            continue;
         }
-    } else {
-        visited.insert(building.clone(), elevator_uses);
+        visited.insert(building.clone());
+
+        if building.is_done() {
+            return elevator_used;
+        }
+        if !building.is_valid() {
+            continue;
+        }
+        elevator_used += 1;
+
+        // Up.
+        if building.elevator < building.floors.len() - 1 {
+            for (i, _c) in building.current_floor().iter().enumerate() {
+                let mut new = building.clone();
+                let moved = new.current_floor_mut().remove(i);
+                new.elevator += 1;
+                new.current_floor_mut().push(moved);
+                queue.push(new);
+            }
+            if building.current_floor().len() >= 2 {
+                for ((i1, _c1), (i2, _c2)) in building.current_floor().iter().enumerate().tuple_combinations() {
+                    let mut new = building.clone();
+                    let moved2 = new.current_floor_mut().remove(i2);
+                    let moved1 = new.current_floor_mut().remove(i1);
+                    new.elevator += 1;
+                    new.current_floor_mut().push(moved1);
+                    new.current_floor_mut().push(moved2);
+                    queue.push(new);
+                }
+            }
+        }
+        // Down.
+        if building.elevator >= 1 {
+            for (i, _c) in building.current_floor().iter().enumerate() {
+                let mut new = building.clone();
+                let moved = new.current_floor_mut().remove(i);
+                new.elevator -= 1;
+                new.current_floor_mut().push(moved);
+                queue.push(new);
+            }
+            if building.current_floor().len() >= 2 {
+                for ((i1, _c1), (i2, _c2)) in building.current_floor().iter().enumerate().tuple_combinations() {
+                    let mut new = building.clone();
+                    let moved2 = new.current_floor_mut().remove(i2);
+                    let moved1 = new.current_floor_mut().remove(i1);
+                    new.elevator -= 1;
+                    new.current_floor_mut().push(moved1);
+                    new.current_floor_mut().push(moved2);
+                    queue.push(new);
+                }
+            }
+        }
     }
-    if !building.is_valid() {
-        return None;
-    }
-    if building.is_done() {
-        return Some(elevator_uses);
-    }
+
+    // if let Some(cached_visited) = visited.get_mut(&building) {
+    //     if elevator_uses < *cached_visited {
+    //         *cached_visited = elevator_uses;
+    //     } else {
+    //         return None;
+    //     }
+    // } else {
+    //     visited.insert(building.clone(), elevator_uses);
+    // }
+    // if !building.is_valid() {
+    //     return None;
+    // }
+    // if building.is_done() {
+    //     return Some(elevator_uses);
+    // }
 
     // dbg!(&building, elevator_uses, building.current_floor().len());
-
-    let mut solutions = Vec::new();
-    // Up.
-    if building.elevator < building.floors.len() - 1 {
-        for (i, _c) in building.current_floor().iter().enumerate() {
-            let mut new = building.clone();
-            let moved = new.current_floor_mut().remove(i);
-            new.elevator += 1;
-            new.current_floor_mut().push(moved);
-            solutions.push(solve(visited, new, elevator_uses + 1));
-        }
-        if building.current_floor().len() >= 2 {
-            for ((i1, _c1), (i2, _c2)) in building.current_floor().iter().enumerate().tuple_combinations() {
-                let mut new = building.clone();
-                let moved2 = new.current_floor_mut().remove(i2);
-                let moved1 = new.current_floor_mut().remove(i1);
-                new.elevator += 1;
-                new.current_floor_mut().push(moved1);
-                new.current_floor_mut().push(moved2);
-                solutions.push(solve(visited, new, elevator_uses + 1));
-            }
-        }
-    }
-    // Down.
-    if building.elevator >= 1 {
-        for (i, _c) in building.current_floor().iter().enumerate() {
-            let mut new = building.clone();
-            let moved = new.current_floor_mut().remove(i);
-            new.elevator -= 1;
-            new.current_floor_mut().push(moved);
-            solutions.push(solve(visited, new, elevator_uses + 1));
-        }
-        if building.current_floor().len() >= 2 {
-            for ((i1, _c1), (i2, _c2)) in building.current_floor().iter().enumerate().tuple_combinations() {
-                let mut new = building.clone();
-                let moved2 = new.current_floor_mut().remove(i2);
-                let moved1 = new.current_floor_mut().remove(i1);
-                new.elevator -= 1;
-                new.current_floor_mut().push(moved1);
-                new.current_floor_mut().push(moved2);
-                solutions.push(solve(visited, new, elevator_uses + 1));
-            }
-        }
-    }
-
-    solutions.into_iter()
-        .filter_map(|s| s)
-        .min()
+    // elevator_used
 }
