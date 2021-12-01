@@ -3,8 +3,9 @@ use std::convert::TryInto;
 use Component::*;
 use std::hash::{Hash, Hasher};
 use std::collections::{HashMap, HashSet};
+use std::collections::hash_map::DefaultHasher;
 
-#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Building {
     elevator: usize,
     floors: [Vec<Component>; 4],
@@ -71,24 +72,37 @@ impl Building {
 //     }
 // }
 // impl Eq for Building {}
-//
-// impl Hash for Building {
-//     fn hash<H: Hasher>(&self, state: &mut H) {
-//         state.write_usize(self.elevator);
-//         for i in 0..self.floors.len() {
-//             state.write_u64(self.floor_hash(i));
-//         }
-//     }
-// }
 
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
+impl Hash for Building {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        state.write_usize(self.elevator);
+        let mut visited_order = HashMap::new();
+        for i in 0..self.floors.len() {
+            let counts = self.floors[i].iter()
+                .counts()
+                .into_iter()
+                .sorted_by_key(|(c, n)| !n);
+            let mut floor_hasher = DefaultHasher::new();
+            for (c, n) in counts {
+                let length = visited_order.len();
+                let ci = *visited_order.entry(c.inner_name()).or_insert(length as u8);
+                for _ in 0..n {
+                    floor_hasher.write_u8(ci);
+                }
+            }
+            state.write_u64(floor_hasher.finish());
+        }
+    }
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub enum Component {
-    Microchip(String),
-    Generator(String),
+    Microchip(u8),
+    Generator(u8),
 }
 
 impl Component {
-    fn inner_name(&self) -> &str {
+    fn inner_name(self) -> u8 {
         match self {
             Microchip(n) => n,
             Generator(n) => n,
@@ -102,15 +116,18 @@ impl Component {
 
 #[aoc_generator(day11)]
 pub fn input_generator(input: &str) -> Building {
+    let mut name_table = HashMap::new();
     let floors = input.lines()
         .map(|l| {
-            l.trim_end_matches('.')
+            l.replace(&[',', '.'][..], "")
                 .split(&[' ', '-'][..])
                 .tuple_windows()
                 .filter_map(|(w1, w2)| {
+                    let length = name_table.len();
+                    let name = *name_table.entry(w1.to_owned()).or_insert(length as u8);
                     match w2 {
-                        "compatible" => Some(Microchip(w1.to_owned())),
-                        "generator" => Some(Generator(w1.to_owned())),
+                        "compatible" => Some(Microchip(name)),
+                        "generator" => Some(Generator(name)),
                         _ => None,
                     }
                 })
@@ -126,67 +143,78 @@ pub fn part1(building: &Building) -> usize {
 }
 
 fn solve(initial: Building) -> usize {
+    dbg!(&initial);
+
     let mut elevator_used = 0;
     let mut visited = HashSet::new();
     let mut queue = vec![initial];
 
     loop {
-        let building = queue.pop().unwrap();
-        if visited.contains(&building) {
-            continue;
-        }
-        visited.insert(building.clone());
+        dbg!(visited.len(), queue.len());
+        let mut next_queue = Vec::new();
+        while !queue.is_empty() {
+            let building = queue.pop().unwrap();
+            visited.insert(building.clone());
 
-        if building.is_done() {
-            return elevator_used;
-        }
-        if !building.is_valid() {
-            continue;
-        }
-        elevator_used += 1;
-
-        // Up.
-        if building.elevator < building.floors.len() - 1 {
-            for (i, _c) in building.current_floor().iter().enumerate() {
-                let mut new = building.clone();
-                let moved = new.current_floor_mut().remove(i);
-                new.elevator += 1;
-                new.current_floor_mut().push(moved);
-                queue.push(new);
+            if building.is_done() {
+                return elevator_used;
             }
-            if building.current_floor().len() >= 2 {
-                for ((i1, _c1), (i2, _c2)) in building.current_floor().iter().enumerate().tuple_combinations() {
+
+            // dbg!(&building);
+
+            // Up.
+            if building.elevator < building.floors.len() - 1 {
+                for (i, _c) in building.current_floor().iter().enumerate() {
                     let mut new = building.clone();
-                    let moved2 = new.current_floor_mut().remove(i2);
-                    let moved1 = new.current_floor_mut().remove(i1);
+                    let moved = new.current_floor_mut().remove(i);
                     new.elevator += 1;
-                    new.current_floor_mut().push(moved1);
-                    new.current_floor_mut().push(moved2);
-                    queue.push(new);
+                    new.current_floor_mut().push(moved);
+                    if !visited.contains(&new) && new.is_valid() {
+                        next_queue.push(new);
+                    }
+                }
+                if building.current_floor().len() >= 2 {
+                    for ((i1, _c1), (i2, _c2)) in building.current_floor().iter().enumerate().tuple_combinations() {
+                        let mut new = building.clone();
+                        let moved2 = new.current_floor_mut().remove(i2);
+                        let moved1 = new.current_floor_mut().remove(i1);
+                        new.elevator += 1;
+                        new.current_floor_mut().push(moved1);
+                        new.current_floor_mut().push(moved2);
+                        if !visited.contains(&new) && new.is_valid() {
+                            next_queue.push(new);
+                        }
+                    }
                 }
             }
-        }
-        // Down.
-        if building.elevator >= 1 {
-            for (i, _c) in building.current_floor().iter().enumerate() {
-                let mut new = building.clone();
-                let moved = new.current_floor_mut().remove(i);
-                new.elevator -= 1;
-                new.current_floor_mut().push(moved);
-                queue.push(new);
-            }
-            if building.current_floor().len() >= 2 {
-                for ((i1, _c1), (i2, _c2)) in building.current_floor().iter().enumerate().tuple_combinations() {
+            // Down.
+            if building.elevator >= 1 {
+                for (i, _c) in building.current_floor().iter().enumerate() {
                     let mut new = building.clone();
-                    let moved2 = new.current_floor_mut().remove(i2);
-                    let moved1 = new.current_floor_mut().remove(i1);
+                    let moved = new.current_floor_mut().remove(i);
                     new.elevator -= 1;
-                    new.current_floor_mut().push(moved1);
-                    new.current_floor_mut().push(moved2);
-                    queue.push(new);
+                    new.current_floor_mut().push(moved);
+                    if !visited.contains(&new) && new.is_valid() {
+                        next_queue.push(new);
+                    }
+                }
+                if building.current_floor().len() >= 2 {
+                    for ((i1, _c1), (i2, _c2)) in building.current_floor().iter().enumerate().tuple_combinations() {
+                        let mut new = building.clone();
+                        let moved2 = new.current_floor_mut().remove(i2);
+                        let moved1 = new.current_floor_mut().remove(i1);
+                        new.elevator -= 1;
+                        new.current_floor_mut().push(moved1);
+                        new.current_floor_mut().push(moved2);
+                        if !visited.contains(&new) && new.is_valid() {
+                            next_queue.push(new);
+                        }
+                    }
                 }
             }
         }
+        queue = next_queue;
+        elevator_used += 1;
     }
 
     // if let Some(cached_visited) = visited.get_mut(&building) {
