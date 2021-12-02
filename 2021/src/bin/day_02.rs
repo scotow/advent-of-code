@@ -4,7 +4,7 @@ fn generator(input: &str) -> Vec<(i32, i32)> {
     input
         .lines()
         .map(|l| {
-            let (op, n) = l.rsplit_once(' ').unwrap();
+            let (op, n) = l.split_once(' ').unwrap();
             let n = n.parse().unwrap();
             match op {
                 "forward" => (n, 0),
