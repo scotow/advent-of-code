@@ -1,6 +1,6 @@
 advent_of_code_2021::main!();
 
-fn generator(input: String) -> Vec<u16> {
+fn generator(input: &str) -> Vec<u16> {
     input
         .lines()
         .map(|d| d.parse().unwrap())
@@ -8,11 +8,11 @@ fn generator(input: String) -> Vec<u16> {
 }
 
 fn part_1(input: Vec<u16>) -> usize {
-    solve(input)
+    increasing(input)
 }
 
 fn part_2(input: Vec<u16>) -> usize {
-    solve(
+    increasing(
         input
             .into_iter()
             .tuple_windows()
@@ -20,8 +20,8 @@ fn part_2(input: Vec<u16>) -> usize {
     )
 }
 
-fn solve(input: impl IntoIterator<Item=u16>) -> usize {
-    input
+fn increasing(ocean: impl IntoIterator<Item=u16>) -> usize {
+    ocean
         .into_iter()
         .tuple_windows()
         .filter(|(d1, d2)| d2 > d1)
