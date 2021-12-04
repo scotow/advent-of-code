@@ -6,19 +6,23 @@ fn generator(input: &str) -> (usize, Vec<u32>) {
         input
             .lines()
             .map(|l| u32::from_str_radix(l, 2).unwrap())
-            .collect()
+            .collect(),
     )
 }
 
 fn part_1((length, inputs): (usize, Vec<u32>)) -> u32 {
-    let gamma = (0..length).rev()
-        .map(|i| inputs
+    let gamma = (0..length)
+        .rev()
+        .map(|i| {
+            inputs
                 .iter()
                 .map(|n| n >> i & 1)
                 .counts()
                 .into_iter()
-                .max_by_key(|&(_, c)| c).unwrap().0
-        )
+                .max_by_key(|&(_, c)| c)
+                .unwrap()
+                .0
+        })
         .fold(0, |acc, b| (acc << 1) | b);
     gamma * (gamma ^ !(!0 << length))
 }
