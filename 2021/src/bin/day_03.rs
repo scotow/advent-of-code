@@ -12,14 +12,13 @@ fn generator(input: &str) -> (usize, Vec<u32>) {
 
 fn part_1((length, inputs): (usize, Vec<u32>)) -> u32 {
     let gamma = (0..length).rev()
-        .map(|i| {
-            let (z, o) = inputs
+        .map(|i| inputs
                 .iter()
-                .fold((0, 0), |(z, o), n| {
-                    if n >> i & 1 == 0 { (z + 1, o) } else { (z, o + 1) }
-                });
-            if z > o { 0 } else { 1 }
-        })
+                .map(|n| n >> i & 1)
+                .counts()
+                .into_iter()
+                .max_by_key(|&(_, c)| c).unwrap().0
+        )
         .fold(0, |acc, b| (acc << 1) | b);
     gamma * (gamma ^ !(!0 << length))
 }
