@@ -30,12 +30,10 @@ fn generator(input: &str) -> (Vec<i32>, Vec<[[i32; 5]; 5]>) {
 fn part_1((outs, mut grids): (Vec<i32>, Vec<[[i32; 5]; 5]>)) -> i32 {
     for o in outs {
         apply_out(o, &mut grids);
-        if let Some(w) = grids
-            .iter()
-            .find(|&g| is_won(g)) {
+        if let Some(w) = grids.iter().find(|&g| is_won(g)) {
             return w.iter().flatten().filter(|c| **c != -1).sum::<i32>() * o;
         }
-    };
+    }
     unreachable!();
 }
 
@@ -49,15 +47,22 @@ fn part_2((outs, mut grids): (Vec<i32>, Vec<[[i32; 5]; 5]>)) -> i32 {
         } else {
             grids.retain(|g| !is_won(g));
         }
-    };
+    }
     unreachable!();
 }
 
-fn apply_out(o: i32, grids: &mut[[[i32; 5]; 5]]) {
-    grids.iter_mut().flatten().flatten().filter(|c| **c == o).for_each(|g| *g = -1);
+fn apply_out(o: i32, grids: &mut [[[i32; 5]; 5]]) {
+    grids
+        .iter_mut()
+        .flatten()
+        .flatten()
+        .filter(|c| **c == o)
+        .for_each(|g| *g = -1);
 }
 
 fn is_won(grid: &[[i32; 5]]) -> bool {
-    grid.iter().any(|r| r.iter().sum::<i32>() == -5) ||
-        (0..5).map(|x| (0..5).map(move |y| grid[y][x])).any(|r| r.sum::<i32>() == -5)
+    grid.iter().any(|r| r.iter().sum::<i32>() == -5)
+        || (0..5)
+            .map(|x| (0..5).map(move |y| grid[y][x]))
+            .any(|r| r.sum::<i32>() == -5)
 }
