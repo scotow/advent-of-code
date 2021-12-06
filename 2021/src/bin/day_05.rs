@@ -1,3 +1,5 @@
+use std::iter::{from_fn, once};
+
 advent_of_code_2021::main!();
 
 fn generator(input: &str) -> Vec<(i16, i16, i16, i16)> {
@@ -29,13 +31,14 @@ fn overlaps(input: impl IntoIterator<Item = (i16, i16, i16, i16)>) -> usize {
         .into_iter()
         .flat_map(|(x1, y1, x2, y2)| {
             let (mut x, mut y) = (x1, y1);
-            let mut pos = vec![(x, y)];
-            while x != x2 || y != y2 {
+            once((x, y)).chain(from_fn(move || {
+                if x == x2 && y == y2 {
+                    return None;
+                }
                 x += (x2 - x1).signum();
                 y += (y2 - y1).signum();
-                pos.push((x, y));
-            }
-            pos
+                Some((x, y))
+            }))
         })
         .counts()
         .into_values()
