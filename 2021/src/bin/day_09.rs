@@ -25,21 +25,13 @@ fn part_2(input: Vec<Vec<u16>>) -> usize {
         (x, y): (usize, usize),
         visited: &mut HashSet<(usize, usize)>,
     ) -> usize {
-        if !visited.insert((x, y)) {
+        if !visited.insert((x, y)) || input[y][x] == 9 {
             return 0;
         }
-        1 + [
-            (x.overflowing_sub(1).0, y),
-            (x + 1, y),
-            (x, y.overflowing_sub(1).0),
-            (x, y + 1),
-        ]
-            .into_iter()
-            .filter(|&(xs, ys)| xs < input[0].len() && ys < input.len() && input[ys][xs] < 9)
+        1 + neighbors(input, (x, y))
             .map(|xy| flood_basin(input, xy, visited))
             .sum::<usize>()
     }
-
     low_points(&input)
         .map(|p| flood_basin(&input, p, &mut HashSet::new()))
         .sorted()
@@ -49,15 +41,20 @@ fn part_2(input: Vec<Vec<u16>>) -> usize {
 }
 
 fn low_points(input: &Vec<Vec<u16>>) -> impl Iterator<Item=(usize, usize)> + '_ {
-    iproduct!(0..input[0].len(), 0..input.len()).filter(|&(x, y)| {
-        [
-            (x.overflowing_sub(1).0, y),
-            (x + 1, y),
-            (x, y.overflowing_sub(1).0),
-            (x, y + 1),
-        ]
-            .into_iter()
-            .filter_map(|(x, y)| input.get(y).and_then(|r| r.get(x)))
-            .all(|&n| input[y][x] < n)
-    })
+    iproduct!(0..input[0].len(), 0..input.len())
+        .filter(|&(x, y)| neighbors(input, (x, y)).all(|(xs, ys)| input[y][x] < input[ys][xs]))
+}
+
+fn neighbors(
+    input: &Vec<Vec<u16>>,
+    (x, y): (usize, usize),
+) -> impl Iterator<Item=(usize, usize)> + '_ {
+    [
+        (x.overflowing_sub(1).0, y),
+        (x + 1, y),
+        (x, y.overflowing_sub(1).0),
+        (x, y + 1),
+    ]
+        .into_iter()
+        .filter(|&(xs, ys)| xs < input[0].len() && ys < input.len())
 }
