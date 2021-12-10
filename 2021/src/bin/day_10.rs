@@ -33,8 +33,7 @@ fn part_2(input: Vec<Vec<u8>>) -> u64 {
                     b'(' => 1,
                     b'[' => 2,
                     b'{' => 3,
-                    b'<' => 4,
-                    _ => unreachable!(),
+                    _ => 4,
                 }
             })
         })
@@ -49,14 +48,12 @@ fn corrupt_score(input: &[u8]) -> Option<u32> {
         if matches!(c, b'(' | b'[' | b'{' | b'<') {
             stack.push(c);
         } else {
-            let latest = stack.pop().unwrap();
-            if c.wrapping_sub(latest) > 2 {
+            if c.wrapping_sub(stack.pop().unwrap()) > 2 {
                 return Some(match c {
                     b')' => 3,
                     b']' => 57,
                     b'}' => 1197,
-                    b'>' => 25137,
-                    _ => unreachable!(),
+                    _ => 25137,
                 });
             }
         }
