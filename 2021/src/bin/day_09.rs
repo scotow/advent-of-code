@@ -40,7 +40,7 @@ fn part_2(input: Vec<Vec<u16>>) -> usize {
         .product()
 }
 
-fn low_points(input: &Vec<Vec<u16>>) -> impl Iterator<Item=(usize, usize)> + '_ {
+fn low_points(input: &Vec<Vec<u16>>) -> impl Iterator<Item = (usize, usize)> + '_ {
     iproduct!(0..input[0].len(), 0..input.len())
         .filter(|&(x, y)| neighbors(input, (x, y)).all(|(xs, ys)| input[y][x] < input[ys][xs]))
 }
@@ -48,13 +48,13 @@ fn low_points(input: &Vec<Vec<u16>>) -> impl Iterator<Item=(usize, usize)> + '_ 
 fn neighbors(
     input: &Vec<Vec<u16>>,
     (x, y): (usize, usize),
-) -> impl Iterator<Item=(usize, usize)> + '_ {
+) -> impl Iterator<Item = (usize, usize)> + '_ {
     [
         (x.overflowing_sub(1).0, y),
         (x + 1, y),
         (x, y.overflowing_sub(1).0),
         (x, y + 1),
     ]
-        .into_iter()
-        .filter(|&(xs, ys)| xs < input[0].len() && ys < input.len())
+    .into_iter()
+    .filter(|&(xs, ys)| xs < input[0].len() && ys < input.len())
 }
