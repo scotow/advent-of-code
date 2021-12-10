@@ -19,23 +19,26 @@ fn part_2(input: Vec<Vec<u8>>) -> u64 {
         .into_iter()
         .filter(|l| corrupt_score(&l).is_none())
         .map(|l| {
-            let mut stack = Vec::new();
-            for c in l {
-                if matches!(c, b'(' | b'[' | b'{' | b'<') {
-                    stack.push(c);
-                } else {
-                    stack.pop();
-                }
-            }
-            stack.into_iter().rev().fold(0, |n, c| {
-                n * 5
-                    + match c {
-                    b'(' => 1,
-                    b'[' => 2,
-                    b'{' => 3,
-                    _ => 4,
-                }
-            })
+            l.into_iter()
+                .fold(Vec::new(), |mut stack, c| {
+                    if matches!(c, b'(' | b'[' | b'{' | b'<') {
+                        stack.push(c);
+                    } else {
+                        stack.pop();
+                    }
+                    stack
+                })
+                .into_iter()
+                .rev()
+                .fold(0, |n, c| {
+                    n * 5
+                        + match c {
+                        b'(' => 1,
+                        b'[' => 2,
+                        b'{' => 3,
+                        _ => 4,
+                    }
+                })
         })
         .sorted()
         .collect_vec();
