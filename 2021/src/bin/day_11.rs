@@ -20,8 +20,7 @@ fn part_1(input: Vec<Vec<u8>>) -> usize {
 
 fn part_2(input: Vec<Vec<u8>>) -> usize {
     1 + Shoal(input)
-        .enumerate()
-        .find(|(_, (s, _))| s.iter().flatten().all(|&n| n == 0))
+        .find_position(|(s, _)| s.iter().flatten().all(|&n| n == 0))
         .unwrap()
         .0
 }
