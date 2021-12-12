@@ -19,10 +19,7 @@ fn part_1(input: Vec<Vec<u8>>) -> usize {
 }
 
 fn part_2(input: Vec<Vec<u8>>) -> usize {
-    1 + Shoal(input)
-        .find_position(|&n| n == 100)
-        .unwrap()
-        .0
+    1 + Shoal(input).find_position(|&n| n == 100).unwrap().0
 }
 
 struct Shoal(Vec<Vec<u8>>);
