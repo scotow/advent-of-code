@@ -15,12 +15,12 @@ fn generator(input: &str) -> Vec<Vec<u8>> {
 }
 
 fn part_1(input: Vec<Vec<u8>>) -> usize {
-    Shoal(input).take(100).map(|(_, c)| c).sum()
+    Shoal(input).take(100).sum()
 }
 
 fn part_2(input: Vec<Vec<u8>>) -> usize {
     1 + Shoal(input)
-        .find_position(|(s, _)| s.iter().flatten().all(|&n| n == 0))
+        .find_position(|&n| n == 100)
         .unwrap()
         .0
 }
@@ -28,7 +28,7 @@ fn part_2(input: Vec<Vec<u8>>) -> usize {
 struct Shoal(Vec<Vec<u8>>);
 
 impl Iterator for Shoal {
-    type Item = (Vec<Vec<u8>>, usize);
+    type Item = usize;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.0.iter_mut().flatten().for_each(|n| *n += 1);
@@ -48,6 +48,6 @@ impl Iterator for Shoal {
                 .for_each(|(x, y)| self.0[y][x] += 1)
             })
         }
-        Some((self.0.clone(), flashed.len()))
+        Some(flashed.len())
     }
 }
