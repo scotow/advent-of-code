@@ -14,38 +14,31 @@ fn generator(input: &'static str) -> HashMap<&'static str, HashSet<&'static str>
 }
 
 fn part_1(input: HashMap<&'static str, HashSet<&'static str>>) -> usize {
-    visit(&input, Vec::new(), "start", false)
+    visit(&input, HashMap::new(), "start", false)
 }
 
 fn part_2(input: HashMap<&'static str, HashSet<&'static str>>) -> usize {
-    visit(&input, Vec::new(), "start", true)
+    visit(&input, HashMap::new(), "start", true)
 }
 
 fn visit(
     map: &HashMap<&'static str, HashSet<&'static str>>,
-    mut path: Vec<&'static str>,
+    mut visited: HashMap<&'static str, usize>,
     current: &'static str,
     allow_double: bool,
 ) -> usize {
     if current == "end" {
         return 1;
     }
-    if current.as_bytes()[0] >= b'a'
-        && path.contains(&current)
-        && (!allow_double
-            || path
-                .iter()
-                .filter(|e| e.as_bytes()[0] >= b'a')
-                .counts()
-                .into_iter()
-                .any(|(_, n)| n == 2))
-    {
-        return 0;
+    if current.as_bytes()[0] >= b'a' {
+        if visited.contains_key(current) && (!allow_double || visited.values().contains(&2)) {
+            return 0;
+        }
+        *visited.entry(current).or_default() += 1;
     }
-    path.push(current);
     map[current]
         .iter()
         .filter(|&&d| d != "start")
-        .map(|dest| visit(map, path.clone(), dest, allow_double))
+        .map(|dest| visit(map, visited.clone(), dest, allow_double))
         .sum()
 }
