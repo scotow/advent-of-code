@@ -22,7 +22,9 @@ fn part_1((points, folds): (HashSet<(usize, usize)>, Vec<(usize, bool)>)) -> usi
 
 fn part_2((points, folds): (HashSet<(usize, usize)>, Vec<(usize, bool)>)) -> String {
     let paper = folds.into_iter().fold(points, fold);
-    let &(w, h) = paper.iter().max().unwrap();
+    let (w, h) = paper
+        .iter()
+        .fold((0, 0), |(xm, ym), &(x, y)| (x.max(xm), y.max(ym)));
     paper
         .into_iter()
         .fold(vec![vec![' '; w + 1]; h + 1], |mut acc, (x, y)| {
