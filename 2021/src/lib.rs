@@ -6,8 +6,8 @@ macro_rules! main {
 
         fn main() {
             let input = generator(include_str!(concat!("../input/", module_path!(), ".txt")));
-            println!("{:?}", part_1(input.clone()));
-            println!("{:?}", part_2(input));
+            println!("{}", part_1(input.clone()));
+            println!("{}", part_2(input));
         }
     };
 }

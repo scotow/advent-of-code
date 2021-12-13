@@ -10,9 +10,9 @@ fn part_1(mut input: Vec<i32>) -> i32 {
     input.into_iter().map(|n| (med - n).abs()).sum()
 }
 
-fn part_2(input: Vec<i32>) -> (i32, i32) {
+fn part_2(input: Vec<i32>) -> String {
     let mean = input.iter().sum::<i32>() / input.len() as i32;
-    let solve = |m: i32| {
+    let solve = |m: i32| -> i32 {
         input
             .iter()
             .map(|n| {
@@ -21,5 +21,5 @@ fn part_2(input: Vec<i32>) -> (i32, i32) {
             })
             .sum()
     };
-    (solve(mean + 1), solve(mean))
+    format!("{} / {}", solve(mean + 1), solve(mean))
 }
