@@ -14,29 +14,17 @@ fn generator(input: &str) -> BitVec<Msb0, u8> {
 }
 
 fn part_1(input: BitVec<Msb0, u8>) -> u16 {
-    Packet::new(input.as_bitslice(), &mut 0).version()
+    parse(input.as_bitslice(), &mut 0).0
 }
 
 fn part_2(input: BitVec<Msb0, u8>) -> u64 {
-    Packet::new(input.as_bitslice(), &mut 0).resolve()
+    parse(input.as_bitslice(), &mut 0).1
 }
 
-#[derive(Debug)]
-enum Packet {
-    Literal(u16, u64),
-    Operator(u16, u8, Vec<Packet>),
-}
-
-impl Packet {
-    fn new(input: &BitSlice<Msb0, u8>, ptr: &mut usize) -> Self {
-        fn read<N: BitMemory>(input: &BitSlice<Msb0, u8>, ptr: &mut usize, size: usize) -> N {
-            *ptr += size;
-            input[*ptr - size..*ptr].load_be()
-        }
-
-        let version = read(input, ptr, 3);
-        let id = read(input, ptr, 3);
-        if id == 4 {
+fn parse(input: &BitSlice<Msb0, u8>, ptr: &mut usize) -> (u16, u64) {
+    let mut version = read(input, ptr, 3);
+    let n = match read::<u8>(input, ptr, 3) {
+        4 => {
             let mut n = 0;
             loop {
                 let m = read::<u64>(input, ptr, 5);
@@ -45,44 +33,41 @@ impl Packet {
                     break;
                 }
             }
-            Packet::Literal(version, n)
-        } else {
-            let mut sub_packets = Vec::new();
+            n
+        }
+        id => {
+            let mut ss = Vec::new();
             if read::<u8>(input, ptr, 1) == 0 {
                 let length = read::<usize>(input, ptr, 15);
                 let end = *ptr + length;
                 while *ptr < end {
-                    sub_packets.push(Self::new(input, ptr));
+                    let (v, n) = parse(input, ptr);
+                    version += v;
+                    ss.push(n);
                 }
             } else {
                 let length = read::<usize>(input, ptr, 11);
-                while sub_packets.len() < length {
-                    sub_packets.push(Self::new(input, ptr));
+                while ss.len() < length {
+                    let (v, n) = parse(input, ptr);
+                    version += v;
+                    ss.push(n);
                 }
             }
-            Packet::Operator(version, id, sub_packets)
+            match id {
+                0 => ss.into_iter().sum(),
+                1 => ss.into_iter().product(),
+                2 => ss.into_iter().min().unwrap(),
+                3 => ss.into_iter().max().unwrap(),
+                5 => (ss[0] > ss[1]).into(),
+                6 => (ss[0] < ss[1]).into(),
+                _ => (ss[0] == ss[1]).into(),
+            }
         }
-    }
+    };
+    (version, n)
+}
 
-    fn version(&self) -> u16 {
-        match self {
-            Packet::Literal(v, _) => *v,
-            Packet::Operator(v, _, ss) => *v + ss.iter().map(Packet::version).sum::<u16>(),
-        }
-    }
-
-    fn resolve(&self) -> u64 {
-        match self {
-            Packet::Literal(_, v) => *v,
-            Packet::Operator(_, id, ss) => match id {
-                0 => ss.iter().map(Packet::resolve).sum(),
-                1 => ss.iter().map(Packet::resolve).product(),
-                2 => ss.iter().map(Packet::resolve).min().unwrap(),
-                3 => ss.iter().map(Packet::resolve).max().unwrap(),
-                5 => (ss[0].resolve() > ss[1].resolve()).into(),
-                6 => (ss[0].resolve() < ss[1].resolve()).into(),
-                _ => (ss[0].resolve() == ss[1].resolve()).into(),
-            },
-        }
-    }
+fn read<N: BitMemory>(input: &BitSlice<Msb0, u8>, ptr: &mut usize, size: usize) -> N {
+    *ptr += size;
+    input[*ptr - size..*ptr].load_be()
 }
