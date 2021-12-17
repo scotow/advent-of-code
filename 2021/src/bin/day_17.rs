@@ -13,7 +13,7 @@ fn generator(input: &str) -> (RangeInclusive<i32>, RangeInclusive<i32>) {
 }
 
 fn part_1((tx, ty): (RangeInclusive<i32>, RangeInclusive<i32>)) -> i32 {
-    iproduct!(0..ty.start().abs(), 0..=*tx.start() / 2)
+    iproduct!(0..ty.start().abs(), 0..=*tx.start())
         .filter_map(|(vy, vx)| solve(&tx, &ty, vx, vy))
         .max()
         .unwrap()
