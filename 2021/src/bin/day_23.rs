@@ -1,5 +1,4 @@
 use pathfinding::prelude::dijkstra;
-use std::fmt::{Debug, Formatter};
 
 advent_of_code_2021::main!();
 
@@ -23,9 +22,6 @@ impl Map {
             let distance = self.room_size - new.rooms[i].len();
             let out = 2 + 2 * i;
             for to_hall in (0..=1).chain((3..=7).step_by(2)).chain(9..=10) {
-                if self.hall[to_hall] != 0 {
-                    continue;
-                }
                 if (out.min(to_hall)..=to_hall.max(out)).any(|h| self.hall[h] != 0) {
                     continue;
                 }
@@ -63,42 +59,6 @@ impl Map {
         self.rooms.iter().enumerate().all(|(i, room)| {
             room.len() == self.room_size && room.into_iter().all(|&f| f == 10usize.pow(i as u32))
         })
-    }
-}
-
-impl Debug for Map {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        fn to_char(f: usize) -> char {
-            match f {
-                0 => '.',
-                1 => 'A',
-                10 => 'B',
-                100 => 'C',
-                1000 => 'D',
-                _ => unreachable!(),
-            }
-        }
-        fn display_line(map: &Map, line: usize) -> String {
-            format!(
-                "{}#{}#{}#{}",
-                to_char(*map.rooms[0].get(line).unwrap_or(&0)),
-                to_char(*map.rooms[1].get(line).unwrap_or(&0)),
-                to_char(*map.rooms[2].get(line).unwrap_or(&0)),
-                to_char(*map.rooms[3].get(line).unwrap_or(&0)),
-            )
-        }
-        writeln!(f)?;
-        writeln!(f, "{}", "#".repeat(self.hall.len() + 2))?;
-        writeln!(
-            f,
-            "#{}#",
-            self.hall.iter().map(|&f| to_char(f)).collect::<String>()
-        )?;
-        writeln!(f, "###{}###", display_line(self, self.room_size - 1))?;
-        for l in (0..self.room_size - 1).rev() {
-            writeln!(f, "  #{}#", display_line(self, l))?;
-        }
-        writeln!(f, "  #########")
     }
 }
 
