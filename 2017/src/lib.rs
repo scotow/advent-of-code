@@ -5,6 +5,7 @@ macro_rules! main {
         use {
             itertools::{iproduct, Itertools},
             std::collections::{HashMap, HashSet},
+            std::mem::replace,
         };
 
         fn main() {
