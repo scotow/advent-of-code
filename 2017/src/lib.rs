@@ -6,6 +6,7 @@ macro_rules! main {
             advent_of_code_2017::knot_hash,
             itertools::{iproduct, Itertools},
             std::collections::{HashMap, HashSet},
+            std::iter::successors,
             std::mem::replace,
         };
 
