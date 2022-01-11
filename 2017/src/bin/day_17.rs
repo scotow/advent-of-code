@@ -15,20 +15,13 @@ fn part_1(input: usize) -> usize {
 }
 
 fn part_2(input: usize) -> usize {
-    let mut buffer = Vec::with_capacity(50000000);
-    buffer.push(0);
-    let mut index = 0;
-    for n in 1usize..=50000000 {
-        index = (index + input) % buffer.len() + 1;
-        buffer.insert(index, n);
-        if n % 100000 == 0 {
-            dbg!(n);
+    let (mut index, mut size, mut value_1) = (0, 1, 1);
+    for n in 1..=50000000 {
+        index = (index + input) % size + 1;
+        if index == 1 {
+            value_1 = n;
         }
+        size += 1;
     }
-    buffer
-        .into_iter()
-        .tuple_windows()
-        .find(|&(n1, _)| n1 == 0)
-        .unwrap()
-        .1
+    value_1
 }
