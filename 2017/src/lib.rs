@@ -8,6 +8,7 @@ macro_rules! main {
             std::collections::{HashMap, HashSet},
             std::iter::successors,
             std::mem::replace,
+            std::str::FromStr,
         };
 
         fn main() {
