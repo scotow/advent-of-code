@@ -1,9 +1,9 @@
 use itertools::Itertools;
-use std::convert::TryInto;
-use Component::*;
-use std::hash::{Hash, Hasher};
-use std::collections::{HashMap, HashSet};
 use std::collections::hash_map::DefaultHasher;
+use std::collections::{HashMap, HashSet};
+use std::convert::TryInto;
+use std::hash::{Hash, Hasher};
+use Component::*;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Building {
@@ -21,28 +21,29 @@ impl Building {
     }
 
     fn is_valid(&self) -> bool {
-        self.floors.iter()
-            .all(|f| {
-                f.iter()
-                    .all(|i| {
-                        match i {
-                            Microchip(n) => {
-                                f.contains(&Generator(n.clone())) || f.iter().all(|i| i.is_microchip())
-                            }
-                            Generator(_) => true,
-                        }
-                    })
-            }) &&
-            !self.current_floor().is_empty()
+        self.floors.iter().all(|f| {
+            f.iter().all(|i| match i {
+                Microchip(n) => {
+                    f.contains(&Generator(n.clone())) || f.iter().all(|i| i.is_microchip())
+                }
+                Generator(_) => true,
+            })
+        }) && !self.current_floor().is_empty()
     }
 
     fn is_done(&self) -> bool {
-        self.floors.split_last().unwrap().1.iter().all(|f| f.is_empty())
+        self.floors
+            .split_last()
+            .unwrap()
+            .1
+            .iter()
+            .all(|f| f.is_empty())
     }
 
     fn floor_hash(&self, i: usize) -> u64 {
         let floor = &self.floors[i];
-        let mut types = floor.iter()
+        let mut types = floor
+            .iter()
             .map(|i| i.inner_name())
             .counts()
             .into_iter()
@@ -78,7 +79,8 @@ impl Hash for Building {
         state.write_usize(self.elevator);
         let mut visited_order = HashMap::new();
         for i in 0..self.floors.len() {
-            let counts = self.floors[i].iter()
+            let counts = self.floors[i]
+                .iter()
                 .counts()
                 .into_iter()
                 .sorted_by_key(|(c, n)| !n);
@@ -117,7 +119,8 @@ impl Component {
 #[aoc_generator(day11)]
 pub fn input_generator(input: &str) -> Building {
     let mut name_table = HashMap::new();
-    let floors = input.lines()
+    let floors = input
+        .lines()
         .map(|l| {
             l.replace(&[',', '.'][..], "")
                 .split(&[' ', '-'][..])
@@ -132,8 +135,14 @@ pub fn input_generator(input: &str) -> Building {
                     }
                 })
                 .collect()
-        }).collect_vec().try_into().unwrap();
-    Building { elevator: 0, floors }
+        })
+        .collect_vec()
+        .try_into()
+        .unwrap();
+    Building {
+        elevator: 0,
+        floors,
+    }
 }
 
 #[aoc(day11, part1)]
@@ -174,7 +183,12 @@ fn solve(initial: Building) -> usize {
                     }
                 }
                 if building.current_floor().len() >= 2 {
-                    for ((i1, _c1), (i2, _c2)) in building.current_floor().iter().enumerate().tuple_combinations() {
+                    for ((i1, _c1), (i2, _c2)) in building
+                        .current_floor()
+                        .iter()
+                        .enumerate()
+                        .tuple_combinations()
+                    {
                         let mut new = building.clone();
                         let moved2 = new.current_floor_mut().remove(i2);
                         let moved1 = new.current_floor_mut().remove(i1);
@@ -199,7 +213,12 @@ fn solve(initial: Building) -> usize {
                     }
                 }
                 if building.current_floor().len() >= 2 {
-                    for ((i1, _c1), (i2, _c2)) in building.current_floor().iter().enumerate().tuple_combinations() {
+                    for ((i1, _c1), (i2, _c2)) in building
+                        .current_floor()
+                        .iter()
+                        .enumerate()
+                        .tuple_combinations()
+                    {
                         let mut new = building.clone();
                         let moved2 = new.current_floor_mut().remove(i2);
                         let moved1 = new.current_floor_mut().remove(i1);

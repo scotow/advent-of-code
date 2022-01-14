@@ -1,16 +1,21 @@
-#[macro_use]
-extern crate aoc_runner_derive;
+#[macro_export]
+macro_rules! main {
+    () => {
+        #[allow(dead_code)]
+        use {
+            itertools::{iproduct, FoldWhile, Itertools},
+            md5::Digest,
+            std::collections::{HashMap, HashSet},
+            std::iter::successors,
+            std::mem::replace,
+            std::str::FromStr,
+        };
 
-// pub mod day_01;
-// pub mod day_02;
-// pub mod day_03;
-// pub mod day_04;
-// pub mod day_05;
-// pub mod day_06;
-// pub mod day_07;
-// pub mod day_08;
-// pub mod day_09;
-// pub mod day_10;
-pub mod day_11;
-
-aoc_lib! { year = 2016 }
+        fn main() {
+            let input =
+                generator(include_str!(concat!("../input/", module_path!(), ".txt")).trim_end());
+            println!("{}", part_1(input.clone()));
+            println!("{}", part_2(input));
+        }
+    };
+}
