@@ -1,3 +1,5 @@
+use md5::Digest;
+
 advent_of_code_2016::main!();
 
 fn generator(input: &str) -> &str {

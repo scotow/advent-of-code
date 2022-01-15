@@ -4,7 +4,6 @@ macro_rules! main {
         #[allow(dead_code)]
         use {
             itertools::{iproduct, FoldWhile, Itertools},
-            md5::Digest,
             std::collections::{HashMap, HashSet},
             std::iter::successors,
             std::mem::replace,
