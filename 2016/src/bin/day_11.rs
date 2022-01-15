@@ -1,6 +1,6 @@
 advent_of_code_2016::main!();
 
-use pathfinding::prelude::dijkstra;
+use pathfinding::prelude::astar;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::Hasher;
 use Component::*;
@@ -12,10 +12,6 @@ struct Building {
 }
 
 impl Building {
-    fn current_floor(&self) -> &Vec<Component> {
-        &self.floors[self.elevator]
-    }
-
     fn current_floor_mut(&mut self) -> &mut Vec<Component> {
         &mut self.floors[self.elevator]
     }
@@ -28,7 +24,7 @@ impl Building {
                 }
                 Generator(_) => true,
             })
-        }) && !self.current_floor().is_empty()
+        })
     }
 
     fn is_done(&self) -> bool {
@@ -97,33 +93,38 @@ fn part_2(mut building: Building) -> usize {
 
 fn solve(mut building: Building) -> usize {
     building.floors.iter_mut().for_each(|f| f.sort());
-    dijkstra(
+    astar(
         &building,
         |building| {
-            let mut next = Vec::new();
-            for size in 1..=2.min(building.floors[building.elevator].len()) {
+            iproduct!(
+                1..=2.min(building.floors[building.elevator].len()),
                 [building.elevator.wrapping_sub(1), building.elevator + 1]
                     .into_iter()
                     .filter(|&e| e < 4)
-                    .for_each(|e| {
-                        building.floors[building.elevator]
-                            .iter()
-                            .copied()
-                            .combinations(size)
-                            .for_each(|cs| {
-                                let mut new = building.clone();
-                                new.current_floor_mut().retain(|c| !cs.contains(&c));
-                                new.current_floor_mut().sort();
-                                new.elevator = e;
-                                new.current_floor_mut().extend_from_slice(&cs);
-                                new.current_floor_mut().sort();
-                                if new.is_valid() {
-                                    next.push((new, 1));
-                                }
-                            });
+            )
+            .flat_map(|(size, e)| {
+                building.floors[building.elevator]
+                    .iter()
+                    .copied()
+                    .combinations(size)
+                    .filter_map(move |cs| {
+                        let mut new = building.clone();
+                        new.current_floor_mut().retain(|c| !cs.contains(&c));
+                        new.current_floor_mut().sort();
+                        new.elevator = e;
+                        new.current_floor_mut().extend_from_slice(&cs);
+                        new.current_floor_mut().sort();
+                        new.is_valid().then(|| (new, 1))
                     })
-            }
-            next
+            })
+            .collect_vec()
+        },
+        |b| {
+            b.floors
+                .iter()
+                .enumerate()
+                .map(|(e, f)| (4 - e) * f.len() * 2)
+                .sum()
         },
         |b| b.is_done(),
     )
