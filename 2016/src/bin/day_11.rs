@@ -3,7 +3,6 @@ advent_of_code_2016::main!();
 use pathfinding::prelude::astar;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::Hasher;
-use Component::*;
 
 #[derive(Clone, Hash, Eq, PartialEq)]
 struct Building {
@@ -19,10 +18,11 @@ impl Building {
     fn is_valid(&self) -> bool {
         self.floors.iter().all(|f| {
             f.iter().all(|i| match i {
-                &Microchip(n) => {
-                    f.contains(&Generator(n)) || f.iter().all(|&i| matches!(i, Microchip(_)))
+                &Component::Microchip(n) => {
+                    f.contains(&Component::Generator(n))
+                        || f.iter().all(|&i| matches!(i, Component::Microchip(_)))
                 }
-                Generator(_) => true,
+                Component::Generator(_) => true,
             })
         })
     }
@@ -48,29 +48,28 @@ impl Component {
         let mut hasher = DefaultHasher::new();
         hasher.write(w1.as_bytes());
         match w2 {
-            "microchip" => Some(Microchip(hasher.finish())),
-            "generator" => Some(Generator(hasher.finish())),
+            "microchip" => Some(Component::Microchip(hasher.finish())),
+            "generator" => Some(Component::Generator(hasher.finish())),
             _ => None,
         }
     }
 }
 
 fn generator(input: &str) -> Building {
-    let floors = input
-        .lines()
-        .map(|l| {
-            l.split([' ', ',', '-', '.'].as_slice())
-                .filter(|&w| w != "compatible")
-                .tuple_windows()
-                .filter_map(|(w1, w2)| Component::parse(w1, w2))
-                .collect()
-        })
-        .collect_vec()
-        .try_into()
-        .unwrap();
     Building {
         elevator: 0,
-        floors,
+        floors: input
+            .lines()
+            .map(|l| {
+                l.split([' ', ',', '-', '.'].as_slice())
+                    .filter(|&w| w != "compatible")
+                    .tuple_windows()
+                    .filter_map(|(w1, w2)| Component::parse(w1, w2))
+                    .collect()
+            })
+            .collect_vec()
+            .try_into()
+            .unwrap(),
     }
 }
 
@@ -96,34 +95,35 @@ fn solve(mut building: Building) -> usize {
     astar(
         &building,
         |building| {
-            iproduct!(
-                1..=2.min(building.floors[building.elevator].len()),
-                [building.elevator.wrapping_sub(1), building.elevator + 1]
-                    .into_iter()
-                    .filter(|&e| e < 4)
-            )
-            .flat_map(|(size, e)| {
-                building.floors[building.elevator]
-                    .iter()
-                    .copied()
-                    .combinations(size)
-                    .filter_map(move |cs| {
-                        let mut new = building.clone();
-                        new.current_floor_mut().retain(|c| !cs.contains(&c));
-                        new.current_floor_mut().sort();
-                        new.elevator = e;
-                        new.current_floor_mut().extend_from_slice(&cs);
-                        new.current_floor_mut().sort();
-                        new.is_valid().then(|| (new, 1))
-                    })
-            })
-            .collect_vec()
+            (1..=2.min(building.floors[building.elevator].len()))
+                .flat_map(|size| {
+                    building.floors[building.elevator]
+                        .iter()
+                        .copied()
+                        .combinations(size)
+                        .flat_map(|cs| {
+                            let mut new = building.clone();
+                            new.current_floor_mut().retain(|c| !cs.contains(&c));
+                            new.current_floor_mut().sort();
+                            [building.elevator.wrapping_sub(1), building.elevator + 1]
+                                .into_iter()
+                                .filter(|&e| e < 4)
+                                .filter_map(move |e| {
+                                    let mut new = new.clone();
+                                    new.elevator = e;
+                                    new.current_floor_mut().extend_from_slice(&cs);
+                                    new.current_floor_mut().sort();
+                                    new.is_valid().then(|| (new, 1))
+                                })
+                        })
+                })
+                .collect_vec()
         },
         |b| {
             b.floors
                 .iter()
                 .enumerate()
-                .map(|(e, f)| (4 - e) * f.len() * 2)
+                .map(|(e, f)| (3 - e) * f.len() * 2)
                 .sum()
         },
         |b| b.is_done(),
