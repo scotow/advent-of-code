@@ -1,12 +1,12 @@
-use itertools::Itertools;
+advent_of_code_2016::main!();
+
+use pathfinding::prelude::dijkstra;
 use std::collections::hash_map::DefaultHasher;
-use std::collections::{HashMap, HashSet};
-use std::convert::TryInto;
-use std::hash::{Hash, Hasher};
+use std::hash::Hasher;
 use Component::*;
 
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct Building {
+#[derive(Clone, Hash, Eq, PartialEq)]
+struct Building {
     elevator: usize,
     floors: [Vec<Component>; 4],
 }
@@ -23,8 +23,8 @@ impl Building {
     fn is_valid(&self) -> bool {
         self.floors.iter().all(|f| {
             f.iter().all(|i| match i {
-                Microchip(n) => {
-                    f.contains(&Generator(n.clone())) || f.iter().all(|i| i.is_microchip())
+                &Microchip(n) => {
+                    f.contains(&Generator(n)) || f.iter().all(|&i| matches!(i, Microchip(_)))
                 }
                 Generator(_) => true,
             })
@@ -36,104 +36,37 @@ impl Building {
             .split_last()
             .unwrap()
             .1
-            .iter()
-            .all(|f| f.is_empty())
-    }
-
-    fn floor_hash(&self, i: usize) -> u64 {
-        let floor = &self.floors[i];
-        let mut types = floor
-            .iter()
-            .map(|i| i.inner_name())
-            .counts()
             .into_iter()
-            .map(|(t, n)| (n, t))
-            .collect_vec();
-        types.sort();
-
-        let mut hash = 0;
-        for (_n, t) in types {
-            if floor.contains(&Generator(t.to_owned())) {
-                hash |= 1;
-            }
-            hash <<= 1;
-            if floor.contains(&Microchip(t.to_owned())) {
-                hash |= 1;
-            }
-            hash <<= 1;
-        }
-        hash
-    }
-}
-
-// impl PartialEq for Building {
-//     fn eq(&self, other: &Self) -> bool {
-//         self.elevator == other.elevator
-//             && (0..self.floors.len()).all(|i| self.floor_hash(i) == other.floor_hash(i))
-//     }
-// }
-// impl Eq for Building {}
-
-impl Hash for Building {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        state.write_usize(self.elevator);
-        let mut visited_order = HashMap::new();
-        for i in 0..self.floors.len() {
-            let counts = self.floors[i]
-                .iter()
-                .counts()
-                .into_iter()
-                .sorted_by_key(|(c, n)| !n);
-            let mut floor_hasher = DefaultHasher::new();
-            for (c, n) in counts {
-                let length = visited_order.len();
-                let ci = *visited_order.entry(c.inner_name()).or_insert(length as u8);
-                for _ in 0..n {
-                    floor_hasher.write_u8(ci);
-                }
-            }
-            state.write_u64(floor_hasher.finish());
-        }
+            .all(|f| f.is_empty())
     }
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
-pub enum Component {
-    Microchip(u8),
-    Generator(u8),
+enum Component {
+    Microchip(u64),
+    Generator(u64),
 }
 
 impl Component {
-    fn inner_name(self) -> u8 {
-        match self {
-            Microchip(n) => n,
-            Generator(n) => n,
+    fn parse(w1: &str, w2: &str) -> Option<Self> {
+        let mut hasher = DefaultHasher::new();
+        hasher.write(w1.as_bytes());
+        match w2 {
+            "microchip" => Some(Microchip(hasher.finish())),
+            "generator" => Some(Generator(hasher.finish())),
+            _ => None,
         }
-    }
-
-    fn is_microchip(&self) -> bool {
-        matches!(self, Microchip(_))
     }
 }
 
-#[aoc_generator(day11)]
-pub fn input_generator(input: &str) -> Building {
-    let mut name_table = HashMap::new();
+fn generator(input: &str) -> Building {
     let floors = input
         .lines()
         .map(|l| {
-            l.replace(&[',', '.'][..], "")
-                .split(&[' ', '-'][..])
+            l.split([' ', ',', '-', '.'].as_slice())
+                .filter(|&w| w != "compatible")
                 .tuple_windows()
-                .filter_map(|(w1, w2)| {
-                    let length = name_table.len();
-                    let name = *name_table.entry(w1.to_owned()).or_insert(length as u8);
-                    match w2 {
-                        "compatible" => Some(Microchip(name)),
-                        "generator" => Some(Generator(name)),
-                        _ => None,
-                    }
-                })
+                .filter_map(|(w1, w2)| Component::parse(w1, w2))
                 .collect()
         })
         .collect_vec()
@@ -145,113 +78,55 @@ pub fn input_generator(input: &str) -> Building {
     }
 }
 
-#[aoc(day11, part1)]
-pub fn part1(building: &Building) -> usize {
-    // dbg!(building);
-    solve(building.clone())
+fn part_1(building: Building) -> usize {
+    solve(building)
 }
 
-fn solve(initial: Building) -> usize {
-    dbg!(&initial);
+fn part_2(mut building: Building) -> usize {
+    building.floors[0].extend(
+        [
+            ("elerium", "generator"),
+            ("elerium", "microchip"),
+            ("dilithium", "generator"),
+            ("dilithium", "microchip"),
+        ]
+        .map(|(w1, w2)| Component::parse(w1, w2).unwrap()),
+    );
+    solve(building)
+}
 
-    let mut elevator_used = 0;
-    let mut visited = HashSet::new();
-    let mut queue = vec![initial];
-
-    loop {
-        dbg!(visited.len(), queue.len());
-        let mut next_queue = Vec::new();
-        while !queue.is_empty() {
-            let building = queue.pop().unwrap();
-            visited.insert(building.clone());
-
-            if building.is_done() {
-                return elevator_used;
+fn solve(mut building: Building) -> usize {
+    building.floors.iter_mut().for_each(|f| f.sort());
+    dijkstra(
+        &building,
+        |building| {
+            let mut next = Vec::new();
+            for size in 1..=2.min(building.floors[building.elevator].len()) {
+                [building.elevator.wrapping_sub(1), building.elevator + 1]
+                    .into_iter()
+                    .filter(|&e| e < 4)
+                    .for_each(|e| {
+                        building.floors[building.elevator]
+                            .iter()
+                            .copied()
+                            .combinations(size)
+                            .for_each(|cs| {
+                                let mut new = building.clone();
+                                new.current_floor_mut().retain(|c| !cs.contains(&c));
+                                new.current_floor_mut().sort();
+                                new.elevator = e;
+                                new.current_floor_mut().extend_from_slice(&cs);
+                                new.current_floor_mut().sort();
+                                if new.is_valid() {
+                                    next.push((new, 1));
+                                }
+                            });
+                    })
             }
-
-            // dbg!(&building);
-
-            // Up.
-            if building.elevator < building.floors.len() - 1 {
-                for (i, _c) in building.current_floor().iter().enumerate() {
-                    let mut new = building.clone();
-                    let moved = new.current_floor_mut().remove(i);
-                    new.elevator += 1;
-                    new.current_floor_mut().push(moved);
-                    if !visited.contains(&new) && new.is_valid() {
-                        next_queue.push(new);
-                    }
-                }
-                if building.current_floor().len() >= 2 {
-                    for ((i1, _c1), (i2, _c2)) in building
-                        .current_floor()
-                        .iter()
-                        .enumerate()
-                        .tuple_combinations()
-                    {
-                        let mut new = building.clone();
-                        let moved2 = new.current_floor_mut().remove(i2);
-                        let moved1 = new.current_floor_mut().remove(i1);
-                        new.elevator += 1;
-                        new.current_floor_mut().push(moved1);
-                        new.current_floor_mut().push(moved2);
-                        if !visited.contains(&new) && new.is_valid() {
-                            next_queue.push(new);
-                        }
-                    }
-                }
-            }
-            // Down.
-            if building.elevator >= 1 {
-                for (i, _c) in building.current_floor().iter().enumerate() {
-                    let mut new = building.clone();
-                    let moved = new.current_floor_mut().remove(i);
-                    new.elevator -= 1;
-                    new.current_floor_mut().push(moved);
-                    if !visited.contains(&new) && new.is_valid() {
-                        next_queue.push(new);
-                    }
-                }
-                if building.current_floor().len() >= 2 {
-                    for ((i1, _c1), (i2, _c2)) in building
-                        .current_floor()
-                        .iter()
-                        .enumerate()
-                        .tuple_combinations()
-                    {
-                        let mut new = building.clone();
-                        let moved2 = new.current_floor_mut().remove(i2);
-                        let moved1 = new.current_floor_mut().remove(i1);
-                        new.elevator -= 1;
-                        new.current_floor_mut().push(moved1);
-                        new.current_floor_mut().push(moved2);
-                        if !visited.contains(&new) && new.is_valid() {
-                            next_queue.push(new);
-                        }
-                    }
-                }
-            }
-        }
-        queue = next_queue;
-        elevator_used += 1;
-    }
-
-    // if let Some(cached_visited) = visited.get_mut(&building) {
-    //     if elevator_uses < *cached_visited {
-    //         *cached_visited = elevator_uses;
-    //     } else {
-    //         return None;
-    //     }
-    // } else {
-    //     visited.insert(building.clone(), elevator_uses);
-    // }
-    // if !building.is_valid() {
-    //     return None;
-    // }
-    // if building.is_done() {
-    //     return Some(elevator_uses);
-    // }
-
-    // dbg!(&building, elevator_uses, building.current_floor().len());
-    // elevator_used
+            next
+        },
+        |b| b.is_done(),
+    )
+    .unwrap()
+    .1
 }
