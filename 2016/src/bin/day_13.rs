@@ -1,3 +1,5 @@
+use pathfinding::prelude::dijkstra;
+
 advent_of_code_2016::main!();
 
 fn generator(input: &str) -> usize {
@@ -5,7 +7,7 @@ fn generator(input: &str) -> usize {
 }
 
 fn part_1(input: usize) -> usize {
-    pathfinding::prelude::dijkstra(
+    dijkstra(
         &(1, 1),
         |&(x, y)| neighbors(x, y, input).into_iter().map(|xy| (xy, 1)),
         |&xy| xy == (31, 39),
@@ -15,35 +17,18 @@ fn part_1(input: usize) -> usize {
 }
 
 fn part_2(input: usize) -> usize {
-    for y in 0..20 {
-        for x in 0..20 {
-            print!("{}", if is_wall(x, y, input) { '#' } else { '.' })
-        }
-        println!();
-    }
-
-    println!();
-    println!();
-
     let mut visited = HashSet::new();
-    visit(1, 1, input, &mut visited, 0);
-
-    for y in 0..20 {
-        for x in 0..20 {
-            print!(
-                "{}",
-                match (is_wall(x, y, input), visited.contains(&(x, y))) {
-                    (true, true) => 'X',
-                    (false, true) => '0',
-                    (true, false) => '#',
-                    (false, false) => '.',
-                }
-            );
-            // print!("{}", if  { '' } else { '.' })
-        }
-        println!();
+    let mut queue = HashSet::new();
+    queue.insert((1, 1));
+    for _ in 0..=50 {
+        let next_queue = queue
+            .iter()
+            .flat_map(|&(x, y)| neighbors(x, y, input))
+            .filter(|xy| !visited.contains(xy))
+            .collect();
+        visited.extend(queue);
+        queue = next_queue;
     }
-
     visited.len()
 }
 
@@ -61,16 +46,4 @@ fn neighbors(x: usize, y: usize, fav: usize) -> Vec<(usize, usize)> {
     }
     next.retain(|&(x, y)| !is_wall(x, y, fav));
     next
-}
-
-fn visit(x: usize, y: usize, fav: usize, visited: &mut HashSet<(usize, usize)>, fuel: usize) {
-    if !visited.insert((x, y)) {
-        return;
-    }
-    if fuel == 14 {
-        return;
-    }
-    for (x, y) in neighbors(x, y, fav) {
-        visit(x, y, fav, visited, fuel + 1);
-    }
 }
