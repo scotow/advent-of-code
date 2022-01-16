@@ -5,7 +5,7 @@ macro_rules! main {
         use {
             itertools::{iproduct, FoldWhile, Itertools},
             std::collections::{HashMap, HashSet},
-            std::iter::successors,
+            std::iter::{once, successors},
             std::mem::replace,
             std::str::FromStr,
         };
