@@ -27,6 +27,27 @@ fn part_1(input: Vec<RangeInclusive<u32>>) -> u32 {
     }
 }
 
-fn part_2(input: Vec<RangeInclusive<u32>>) -> usize {
-    0
+fn part_2(input: Vec<RangeInclusive<u32>>) -> u32 {
+    let mut count = 0;
+    let mut ip = 0;
+    loop {
+        let rule = input
+            .iter()
+            .filter(|rule| *rule.start() >= ip)
+            .min_by_key(|rule| *rule.start())
+            .unwrap();
+        count += *rule.start() - ip;
+        let mut end = *rule.end();
+        loop {
+            if let Some(rule) = input.iter().find(|r| r.contains(&end)) {
+                if *rule.end() == u32::MAX {
+                    return count;
+                }
+                end = *rule.end() + 1;
+            } else {
+                break;
+            }
+        }
+        ip = end;
+    }
 }
