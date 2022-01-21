@@ -31,7 +31,7 @@ struct Move {
     distance: isize,
 }
 
-pub fn generator(input: &str) -> Vec<Move> {
+fn generator(input: &str) -> Vec<Move> {
     input
         .split(", ")
         .map(|s| {
