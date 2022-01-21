@@ -1,56 +1,7 @@
 advent_of_code_2016::main!();
 
-#[derive(Clone, Copy, Debug)]
-enum Param {
-    Value(i64),
-    Var(usize),
-    None,
-}
-
-impl FromStr for Param {
-    type Err = ();
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(if let Ok(n) = s.parse() {
-            Self::Value(n)
-        } else {
-            Self::Var((s.as_bytes()[0] - b'a') as usize)
-        })
-    }
-}
-
-impl Param {
-    fn to_value(self, vars: &[i64; 4]) -> i64 {
-        match self {
-            Param::Value(n) => n,
-            Param::Var(i) => vars[i],
-            Param::None => 0,
-        }
-    }
-
-    fn to_var(self, vars: &mut [i64; 4]) -> &mut i64 {
-        match self {
-            Param::Var(i) => &mut vars[i],
-            _ => unreachable!(),
-        }
-    }
-}
-
 fn generator(input: &str) -> Vec<(&str, Param, Param)> {
-    input
-        .lines()
-        .map(|l| {
-            let mut parts = l.split_whitespace();
-            (
-                parts.next().unwrap(),
-                parts.next().unwrap().parse().unwrap(),
-                parts
-                    .next()
-                    .map(|s| s.parse().unwrap())
-                    .unwrap_or(Param::None),
-            )
-        })
-        .collect()
+    Param::from_generator(input)
 }
 
 fn part_1(ops: Vec<(&str, Param, Param)>) -> i64 {
