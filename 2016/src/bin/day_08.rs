@@ -42,15 +42,14 @@ fn part_1(ops: Vec<Op>) -> usize {
 
 fn part_2(ops: Vec<Op>) -> String {
     let grid = solve::<50, 6>(ops);
-    let ascii = grid
+    grid
         .iter()
         .map(|r| {
             r.iter()
                 .map(|&c| if c { '#' } else { '.' })
                 .collect::<String>()
         })
-        .join("\n");
-    "\n".to_owned() + &ascii
+        .join("\n")
 }
 
 fn solve<const W: usize, const H: usize>(ops: Vec<Op>) -> [[bool; W]; H] {
