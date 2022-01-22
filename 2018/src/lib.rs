@@ -7,6 +7,7 @@ macro_rules! main {
             std::collections::{HashMap, HashSet},
             std::iter::{once, successors},
             std::mem::replace,
+            std::ops::{Range, RangeInclusive},
             std::str::FromStr,
         };
 
