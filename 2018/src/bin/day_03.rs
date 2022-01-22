@@ -27,14 +27,14 @@ fn part_1(input: Vec<Claim>) -> usize {
 fn part_2(input: Vec<Claim>) -> usize {
     input
         .iter()
-        .find(|&&(n1, x1, y1, w1, h1)| {
+        .find_map(|&(n1, x1, y1, w1, h1)| {
             input
                 .iter()
                 .filter(|&&(n2, ..)| n1 != n2)
                 .all(|&(_, x2, y2, w2, h2)| {
                     x1 > x2 + w2 || x1 + w1 < x2 || y1 > y2 + h2 || y1 + h1 < y2
                 })
+                .then(|| n1)
         })
         .unwrap()
-        .0
 }
