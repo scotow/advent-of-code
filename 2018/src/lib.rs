@@ -3,6 +3,7 @@ macro_rules! main {
     () => {
         #[allow(dead_code)]
         use {
+            advent_of_code_2018::abs_diff,
             itertools::{iproduct, FoldWhile, Itertools},
             std::collections::{HashMap, HashSet},
             std::iter::{once, successors},
@@ -18,4 +19,14 @@ macro_rules! main {
             println!("{}", part_2(input));
         }
     };
+}
+
+use std::ops::Sub;
+
+pub fn abs_diff<T: Sub<Output = T> + Ord>(x: T, y: T) -> T {
+    if x < y {
+        y - x
+    } else {
+        x - y
+    }
 }
