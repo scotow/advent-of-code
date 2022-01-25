@@ -5,7 +5,7 @@ macro_rules! main {
         use {
             advent_of_code_2018::abs_diff,
             itertools::{iproduct, FoldWhile, Itertools},
-            std::collections::{HashMap, HashSet},
+            std::collections::{HashMap, HashSet, VecDeque},
             std::fmt::{Debug, Display, Formatter},
             std::iter::{once, successors},
             std::mem::replace,
