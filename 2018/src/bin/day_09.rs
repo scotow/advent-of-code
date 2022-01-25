@@ -9,31 +9,25 @@ fn generator(input: &str) -> (usize, usize) {
 }
 
 fn part_1((players, last): (usize, usize)) -> usize {
-    solve(players, last)
+    solve2(players, last)
 }
 
 fn part_2((players, last): (usize, usize)) -> usize {
-    solve(players, last * 100)
+    solve2(players, last * 100)
 }
 
-fn solve(players: usize, last: usize) -> usize {
-    let mut ring = vec![0, 2, 1];
-    let mut index = 1;
+fn solve2(players: usize, last: usize) -> usize {
+    let mut ring = VecDeque::from([0, 2, 1]);
     let mut scores = vec![0; players];
     let mut player = 0;
     for marble in 3..=last {
         if marble % 23 == 0 {
-            index = (index + ring.len() - 7) % ring.len();
-            scores[player] += marble + ring.remove(index);
+            ring.rotate_right(7);
+            scores[player] += marble + ring.pop_back().unwrap();
+            ring.rotate_left(1);
         } else {
-            index += 2;
-            if index > ring.len() {
-                index -= ring.len();
-            }
-            ring.insert(index, marble);
-        }
-        if marble % 100_000 == 0 {
-            println!("{}", marble);
+            ring.rotate_left(1);
+            ring.push_back(marble);
         }
         player = (player + 1) % players;
     }
