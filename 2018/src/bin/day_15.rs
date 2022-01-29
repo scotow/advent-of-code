@@ -1,5 +1,4 @@
 use pathfinding::prelude::dijkstra_all;
-use std::fmt::Write;
 
 advent_of_code_2018::main!();
 
@@ -44,17 +43,6 @@ impl Cell {
     }
 }
 
-impl Debug for Cell {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.write_char(match self {
-            Cell::Wall => '#',
-            Cell::Empty => '.',
-            Cell::Elf(_) => 'E',
-            Cell::Goblin(_) => 'G',
-        })
-    }
-}
-
 fn generator(input: &str) -> Grid {
     input
         .lines()
@@ -62,62 +50,70 @@ fn generator(input: &str) -> Grid {
             l.bytes()
                 .map(|c| match c {
                     b'#' => Cell::Wall,
+                    b'.' => Cell::Empty,
                     b'E' => Cell::Elf(200),
                     b'G' => Cell::Goblin(200),
-                    _ => Cell::Empty,
+                    _ => unreachable!(),
                 })
                 .collect()
         })
         .collect()
 }
 
-fn part_1(mut grid: Grid) -> u32 {
-    // print_grid(&grid);
-    let mut rounds = 0;
-    loop {
+fn part_1(grid: Grid) -> u32 {
+    run(grid, 3, false).unwrap()
+}
+
+fn part_2(grid: Grid) -> u32 {
+    (4..).find_map(|dmg| run(grid.clone(), dmg, true)).unwrap()
+}
+
+fn run(mut grid: Grid, dmg: u32, only_elves: bool) -> Option<u32> {
+    let elves = find_cells(&grid, Cell::is_elf).len();
+    for r in 0.. {
         let mut entities = find_cells(&grid, Cell::is_elf);
         entities.extend(find_cells(&grid, Cell::is_goblin));
         entities.sort_by(|(x1, y1), (x2, y2)| y1.cmp(y2).then(x1.cmp(x2)));
         let mut died = HashSet::new();
         for (ex, ey) in entities {
-            if find_cells(&grid, Cell::is_elf).is_empty()
-                || find_cells(&grid, Cell::is_goblin).is_empty()
+            if only_elves && find_cells(&grid, Cell::is_elf).len() != elves {
+                return None;
+            }
+            if find_cells(&grid, Cell::is_goblin).is_empty()
+                || find_cells(&grid, Cell::is_elf).is_empty()
             {
-                return rounds
-                    * grid
+                return Some(
+                    r * grid
                         .into_iter()
                         .flat_map(|r| r)
                         .filter(|&c| matches!(c, Cell::Elf(_) | Cell::Goblin(_)))
                         .map(|c| c.hp())
-                        .sum::<u32>();
+                        .sum::<u32>(),
+                );
             }
             if died.contains(&(ex, ey)) {
                 continue;
             }
-            if let Some(kill) = turn(&mut grid, ex, ey) {
+            if let Some(kill) = turn(&mut grid, ex, ey, dmg) {
                 died.insert(kill);
             }
         }
-        rounds += 1;
     }
+    unreachable!();
 }
 
-fn part_2(_grid: Grid) -> u8 {
-    0
-}
-
-fn turn(grid: &mut Grid, cx: usize, cy: usize) -> Option<(usize, usize)> {
-    let enemies = if grid[cy][cx].is_elf() {
-        Cell::is_goblin
+fn turn(grid: &mut Grid, cx: usize, cy: usize, dmg: u32) -> Option<(usize, usize)> {
+    let (enemies, dmg) = if grid[cy][cx].is_elf() {
+        (Cell::is_goblin as CellMatch, dmg)
     } else {
-        Cell::is_elf
+        (Cell::is_elf as CellMatch, 3)
     };
-    match attack(grid, cx, cy, enemies) {
+    match attack(grid, cx, cy, enemies, dmg) {
         (true, kill) => return kill,
         _ => (),
     }
     let (cx, cy) = walk(grid, cx, cy, enemies);
-    attack(grid, cx, cy, enemies).1
+    attack(grid, cx, cy, enemies, dmg).1
 }
 
 fn attack(
@@ -125,6 +121,7 @@ fn attack(
     cx: usize,
     cy: usize,
     enemies: CellMatch,
+    dmg: u32,
 ) -> (bool, Option<(usize, usize)>) {
     let targets = find_near(&grid, cx, cy, enemies);
     if targets.is_empty() {
@@ -135,11 +132,11 @@ fn attack(
         .map(|(x, y)| ((x, y), grid[y][x].hp()))
         .min_by(|((x1, y1), h1), ((x2, y2), h2)| h1.cmp(h2).then(y1.cmp(y2)).then(x1.cmp(x2)))
         .unwrap();
-    if hp <= 3 {
+    if hp <= dmg {
         grid[ty][tx] = Cell::Empty;
         (true, Some((tx, ty)))
     } else {
-        *grid[ty][tx].hp_mut() -= 3;
+        *grid[ty][tx].hp_mut() -= dmg;
         (true, None)
     }
 }
@@ -203,25 +200,4 @@ fn find_near(grid: &Grid, x: usize, y: usize, kind: CellMatch) -> Vec<(usize, us
         .into_iter()
         .filter(|&(x, y)| kind(grid[y][x]))
         .collect()
-}
-
-fn print_grid(grid: &Grid) {
-    for r in grid {
-        println!(
-            "{}   {}",
-            r.into_iter()
-                .map(|&c| format!("{:?}", c))
-                .collect::<String>(),
-            r.into_iter()
-                .filter_map(|&c| {
-                    if matches!(c, Cell::Elf(_) | Cell::Goblin(_)) {
-                        Some(format!("{:?}({})", c, c.hp()))
-                    } else {
-                        None
-                    }
-                })
-                .join(", ")
-        );
-    }
-    println!();
 }
