@@ -26,6 +26,10 @@ impl Cell {
         matches!(self, Cell::Goblin(_))
     }
 
+    fn is_entity(self) -> bool {
+        matches!(self, Cell::Elf(_) | Cell::Goblin(_))
+    }
+
     fn hp(self) -> u32 {
         match self {
             Cell::Elf(hp) => hp,
@@ -71,11 +75,11 @@ fn part_2(grid: Grid) -> u32 {
 fn run(mut grid: Grid, dmg: u32, only_elves: bool) -> Option<u32> {
     let elves = find_cells(&grid, Cell::is_elf).len();
     for r in 0.. {
-        let mut entities = find_cells(&grid, Cell::is_elf);
-        entities.extend(find_cells(&grid, Cell::is_goblin));
-        entities.sort_by(|(x1, y1), (x2, y2)| y1.cmp(y2).then(x1.cmp(x2)));
         let mut died = HashSet::new();
-        for (ex, ey) in entities {
+        for (ex, ey) in find_cells(&grid, Cell::is_entity) {
+            if died.contains(&(ex, ey)) {
+                continue;
+            }
             if only_elves && find_cells(&grid, Cell::is_elf).len() != elves {
                 return None;
             }
@@ -85,14 +89,11 @@ fn run(mut grid: Grid, dmg: u32, only_elves: bool) -> Option<u32> {
                 return Some(
                     r * grid
                         .into_iter()
-                        .flat_map(|r| r)
-                        .filter(|&c| matches!(c, Cell::Elf(_) | Cell::Goblin(_)))
+                        .flatten()
+                        .filter(|&c| c.is_entity())
                         .map(|c| c.hp())
                         .sum::<u32>(),
                 );
-            }
-            if died.contains(&(ex, ey)) {
-                continue;
             }
             if let Some(kill) = turn(&mut grid, ex, ey, dmg) {
                 died.insert(kill);
@@ -102,7 +103,7 @@ fn run(mut grid: Grid, dmg: u32, only_elves: bool) -> Option<u32> {
     unreachable!();
 }
 
-fn turn(grid: &mut Grid, cx: usize, cy: usize, dmg: u32) -> Option<(usize, usize)> {
+fn turn(grid: &mut Grid, mut cx: usize, mut cy: usize, dmg: u32) -> Option<(usize, usize)> {
     let (enemies, dmg) = if grid[cy][cx].is_elf() {
         (Cell::is_goblin as CellMatch, dmg)
     } else {
@@ -112,7 +113,7 @@ fn turn(grid: &mut Grid, cx: usize, cy: usize, dmg: u32) -> Option<(usize, usize
         (true, kill) => return kill,
         _ => (),
     }
-    let (cx, cy) = walk(grid, cx, cy, enemies);
+    walk(grid, &mut cx, &mut cy, enemies);
     attack(grid, cx, cy, enemies, dmg).1
 }
 
@@ -141,15 +142,14 @@ fn attack(
     }
 }
 
-fn walk(grid: &mut Grid, cx: usize, cy: usize, enemies: CellMatch) -> (usize, usize) {
-    let outs = find_near(&grid, cx, cy, Cell::is_empty);
+fn walk(grid: &mut Grid, cx: &mut usize, cy: &mut usize, enemies: CellMatch) {
     let attack_spots = find_cells(&grid, enemies)
         .into_iter()
         .flat_map(|(x, y)| find_near(&grid, x, y, Cell::is_empty))
         .collect_vec();
-    let choices = outs
-        .iter()
-        .flat_map(|&(ox, oy)| {
+    let choices = find_near(&grid, *cx, *cy, Cell::is_empty)
+        .into_iter()
+        .flat_map(|(ox, oy)| {
             let mut mapping = dijkstra_all(&(ox, oy), |&(x, y)| {
                 find_near(&grid, x, y, Cell::is_empty)
                     .into_iter()
@@ -158,17 +158,15 @@ fn walk(grid: &mut Grid, cx: usize, cy: usize, enemies: CellMatch) -> (usize, us
             });
             mapping.insert((ox, oy), ((ox, oy), 0));
             attack_spots.iter().filter_map(move |&(ax, ay)| {
-                if let Some(&(_, cost)) = mapping.get(&(ax, ay)) {
-                    Some((cost, ((ax, ay), (ox, oy))))
-                } else {
-                    None
-                }
+                mapping
+                    .get(&(ax, ay))
+                    .map(|&(_, cost)| (cost, ((ax, ay), (ox, oy))))
             })
         })
         .into_group_map();
     let bests = match choices.into_iter().min_by_key(|&(dist, _)| dist) {
         Some((_, bests)) => bests,
-        None => return (cx, cy),
+        None => return,
     };
     let (_, (ox, oy)) = bests
         .into_iter()
@@ -179,9 +177,10 @@ fn walk(grid: &mut Grid, cx: usize, cy: usize, enemies: CellMatch) -> (usize, us
                 .then(ox1.cmp(&ox2))
         })
         .unwrap();
-    grid[oy][ox] = grid[cy][cx];
-    grid[cy][cx] = Cell::Empty;
-    (ox, oy)
+    grid[oy][ox] = grid[*cy][*cx];
+    grid[*cy][*cx] = Cell::Empty;
+    *cx = ox;
+    *cy = oy;
 }
 
 fn find_cells(grid: &Grid, kind: CellMatch) -> Vec<(usize, usize)> {
