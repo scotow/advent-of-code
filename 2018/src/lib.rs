@@ -9,6 +9,7 @@ macro_rules! main {
             std::fmt::{Debug, Display, Formatter},
             std::iter::{once, successors},
             std::mem::replace,
+            std::ops::{Add, Sub},
             std::ops::{Range, RangeInclusive},
             std::str::FromStr,
         };

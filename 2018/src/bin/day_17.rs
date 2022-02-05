@@ -5,7 +5,6 @@ type Grid = HashMap<(usize, usize), Cell>;
 #[derive(Copy, Clone, Debug)]
 enum Cell {
     Wall,
-    Empty,
     Water,
     Flow,
 }
@@ -29,88 +28,82 @@ fn generator(input: &str) -> Grid {
 }
 
 fn part_1(mut grid: Grid) -> usize {
-    let y_max = grid.iter().map(|(&(_, y), _)| y).max().unwrap();
-    // grid.insert((500, 0), Cell::Flow);
-    print_grid(&grid);
-    let mut sources = vec![(500, 0)];
-    while !sources.is_empty() {
-        let (xs, ys) = sources.remove(0);
-        sources.extend(run_source(&mut grid, xs, ys, y_max));
-    }
-    print_grid(&grid);
-    grid.into_values()
-        .filter(|&c| matches!(c, Cell::Water | Cell::Flow))
-        .count()
+    let y_min = solve(&mut grid);
+    grid.retain(|&(_, y), c| y >= y_min && matches!(c, Cell::Water | Cell::Flow));
+    grid.len()
 }
 
-fn part_2(input: Grid) -> u8 {
-    0
+fn part_2(mut grid: Grid) -> usize {
+    let y_min = solve(&mut grid);
+    grid.retain(|&(_, y), c| y >= y_min && matches!(c, Cell::Water));
+    grid.len()
 }
 
-fn run_source(grid: &mut Grid, xs: usize, mut ys: usize, y_max: usize) -> Vec<(usize, usize)> {
-    loop {
-        // dbg!("here");
-        let bot = (ys + 1..)
-            .find(|&y| grid.contains_key(&(xs, y + 1)) || y == y_max)
-            .unwrap();
-        if bot == y_max {
-            for y in ys + 1..=y_max {
-                grid.insert((xs, y), Cell::Flow);
-            }
-            return Vec::new();
-        }
-        dbg!(bot);
-        let to_fill = (xs..)
-            .take_while(|&x| !grid.contains_key(&(x, bot)) && grid.contains_key(&(x - 1, bot + 1)))
-            .chain((0..xs).rev().take_while(|&x| {
-                !grid.contains_key(&(x, bot)) && grid.contains_key(&(x + 1, bot + 1))
-            }))
-            .collect_vec();
-        let sources = to_fill
-            .iter()
-            .filter(|&&x| !grid.contains_key(&(x, bot + 1)))
-            .map(|&x| (x, bot))
-            .collect_vec();
-        let kind = if sources.is_empty() {
-            Cell::Water
-        } else {
-            Cell::Flow
-        };
-        for x in to_fill {
-            grid.insert((x, bot), kind);
-        }
-        print_grid(&grid);
-        std::thread::sleep(std::time::Duration::from_millis(500));
-        if !sources.is_empty() {
-            for y in ys + 1..bot {
-                grid.insert((xs, y), Cell::Flow);
-            }
-            return sources;
-        }
-    }
-}
-
-fn print_grid(grid: &Grid) {
-    print!("{}[2J", 27 as char);
-    let (xm, xn) = grid
-        .into_iter()
-        .map(|(&(x, _), _)| x)
+fn solve(grid: &mut Grid) -> usize {
+    let mut sources = HashSet::new();
+    sources.insert((500, 0));
+    let mut lengths = [grid.len(); 3];
+    let (y_min, y_max) = grid
+        .iter()
+        .map(|(&(_, y), _)| y)
         .minmax()
         .into_option()
         .unwrap();
-    let yn = grid.into_iter().map(|(&(_, y), _)| y).max().unwrap();
-    for y in 0..=300 {
-        println!(
-            "{}",
-            (xm..=xn)
-                .map(|x| match grid.get(&(x, y)).unwrap_or(&Cell::Empty) {
-                    Cell::Wall => '#',
-                    Cell::Empty => ' ',
-                    Cell::Water => '~',
-                    Cell::Flow => '|',
-                })
-                .collect::<String>()
+    loop {
+        let mut next_sources = sources.clone();
+        for (xs, ys) in sources {
+            next_sources.extend(flow(grid, y_max, xs, ys).into_iter().filter_map(|s| s));
+        }
+        sources = next_sources;
+        if grid.len() == lengths[0] {
+            break;
+        } else {
+            lengths.rotate_left(1);
+            *lengths.last_mut().unwrap() = grid.len();
+        }
+    }
+    y_min
+}
+
+fn flow(grid: &mut Grid, y_max: usize, xs: usize, ys: usize) -> Vec<Option<(usize, usize)>> {
+    let bot = (ys..)
+        .find(|&y| is_stop(grid, xs, y + 1) || y == y_max)
+        .unwrap();
+    grid.extend((ys..=bot).map(|y| ((xs, y), Cell::Flow)));
+    if bot == y_max {
+        return Vec::new();
+    }
+    let (lx, lw) = find_edge(grid, (0..=xs).rev(), bot, usize::sub);
+    let (rx, rw) = find_edge(grid, xs.., bot, usize::add);
+    for x in lx..=rx {
+        grid.insert(
+            (x, bot),
+            (lw && rw).then(|| Cell::Water).unwrap_or(Cell::Flow),
         );
     }
-    println!();
+    if lw && rw {
+        Vec::new()
+    } else {
+        vec![(!lw).then(|| (lx, bot)), (!rw).then(|| (rx, bot))]
+    }
+}
+
+fn is_stop(grid: &Grid, x: usize, y: usize) -> bool {
+    matches!(grid.get(&(x, y)), Some(Cell::Wall) | Some(Cell::Water))
+}
+
+fn find_edge(
+    grid: &Grid,
+    mut iter: impl Iterator<Item = usize>,
+    y: usize,
+    next: fn(usize, usize) -> usize,
+) -> (usize, bool) {
+    iter.find_map(
+        |x| match (is_stop(grid, next(x, 1), y), is_stop(grid, x, y + 1)) {
+            (true, _) => Some((x, true)),
+            (_, false) => Some((x, false)),
+            _ => None,
+        },
+    )
+    .unwrap()
 }
