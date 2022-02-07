@@ -1,4 +1,5 @@
 use pathfinding::prelude::dijkstra_all;
+
 advent_of_code_2018::main!();
 
 type Map = HashMap<(i16, i16), HashSet<(i16, i16)>>;
@@ -28,23 +29,31 @@ fn parse(rgx: &[u8], ptr: &mut usize, map: &mut Map, start: (i16, i16)) -> (i16,
                 None
             }
             b'|' => {
-                pos = parse(rgx, ptr, map, pos);
-                None
+                parse(rgx, ptr, map, start);
+                return pos;
             }
             b')' => return pos,
             _ => unreachable!(),
         };
         if let Some((dx, dy)) = delta {
-            map.entry(pos).or_insert(HashSet::new()).insert((dx, dy));
+            map.entry(pos).or_default().insert((dx, dy));
             pos.0 += dx;
             pos.1 += dy;
         }
     }
-    pos
+    (0, 0)
 }
 
-fn part_1(map: Map) -> usize {
-    let paths = dijkstra_all(&(0, 0), |&(x, y)| {
+fn part_1(input: Map) -> usize {
+    solve(input).max().unwrap()
+}
+
+fn part_2(input: Map) -> usize {
+    solve(input).filter(|&n| n >= 1000).count()
+}
+
+fn solve(map: Map) -> impl Iterator<Item = usize> {
+    dijkstra_all(&(0, 0), |&(x, y)| {
         map.get(&(x, y))
             .map(|ngs| {
                 ngs.into_iter()
@@ -52,11 +61,7 @@ fn part_1(map: Map) -> usize {
                     .collect_vec()
             })
             .unwrap_or_default()
-    });
-    dbg!(&paths);
-    paths.into_values().map(|(_, n)| n).max().unwrap()
-}
-
-fn part_2(_input: Map) -> u8 {
-    0
+    })
+    .into_values()
+    .map(|(_, n)| n)
 }
