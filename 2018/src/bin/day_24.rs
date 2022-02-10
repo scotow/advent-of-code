@@ -23,12 +23,11 @@ impl Group {
             let specs = &specs[1..specs.len() - 1];
             for s in specs.split("; ") {
                 let (to, _, kinds) = s.splitn(3, ' ').collect_tuple().unwrap();
-                let kinds = kinds.split(", ").collect_vec();
                 *match to {
                     "weak" => &mut weak,
                     "immune" => &mut immune,
                     _ => unreachable!(),
-                } = kinds;
+                } = kinds.split(", ").collect_vec();
             }
             shift = specs.split_whitespace().count();
         }
@@ -69,54 +68,34 @@ fn generator(input: &'static str) -> HashMap<usize, Group> {
 }
 
 fn part_1(groups: HashMap<usize, Group>) -> u32 {
-    solve(groups, 0).unwrap().1
+    solve(groups).unwrap().1
 }
 
 fn part_2(groups: HashMap<usize, Group>) -> u32 {
-    // (1..)
-    //     .find_map(|boost| {
-    //         dbg!(boost);
-    //         let mut groups = groups.clone();
-    //         groups
-    //             .values_mut()
-    //             .filter(|g| g.team == 0)
-    //             .for_each(|g| g.ap += boost);
-    //         solve(groups, boost).and_then(|(w, u)| (w == 0).then(|| u))
-    //         // (w == 0).then(|| r)
-    //     })
-    //     .unwrap()
-    (1..189).for_each(|boost| {
-        // dbg!(boost);
-        let mut groups = groups.clone();
-        groups
-            .values_mut()
-            .filter(|g| g.team == 0)
-            .for_each(|g| g.ap += boost);
-        // dbg!(&groups);
-        // solve(groups, boost).and_then(|(w, u)| (w == 0).then(|| u))
-        if let Some((w, u)) = solve(groups, boost) {
-            // dbg!(boost)
-            // if w == 0 {
-                dbg!(boost, u, w);
-                // panic!();
-            // }
-        }
-        // (w == 0).then(|| r)
-    });
-    0
+    (1..)
+        .find_map(|boost| {
+            let mut groups = groups.clone();
+            groups
+                .values_mut()
+                .filter(|g| g.team == 0)
+                .for_each(|g| g.ap += boost);
+            solve(groups).and_then(|(w, u)| (w == 0).then(|| u))
+        })
+        .unwrap()
 }
 
-fn solve(mut groups: HashMap<usize, Group>, b: u32) -> Option<(u8, u32)> {
-    // dbg!(&groups);
+fn solve(mut groups: HashMap<usize, Group>) -> Option<(u8, u32)> {
     let mut units = groups.values().map(|g| g.units).sum();
-    loop {
+    while !groups.values().map(|g| g.team).all_equal() {
         let mut targeting = HashMap::new();
         for (&an, ag) in groups.iter().sorted_by(|(_, g1), (_, g2)| {
             g1.ep().cmp(&g2.ep()).then(g1.init.cmp(&g2.init)).reverse()
         }) {
-            if let Some((&dn, _)) = groups
+            groups
                 .iter()
-                .filter(|(dn, dg)| ag.team != dg.team && !targeting.values().contains(dn))
+                .filter(|(dn, dg)| {
+                    ag.team != dg.team && !targeting.values().contains(dn) && ag.dmg(dg) > 0
+                })
                 .sorted_by(|(_, g1), (_, g2)| {
                     ag.dmg(g1)
                         .cmp(&ag.dmg(g2))
@@ -125,18 +104,8 @@ fn solve(mut groups: HashMap<usize, Group>, b: u32) -> Option<(u8, u32)> {
                         .reverse()
                 })
                 .next()
-            {
-                targeting.insert(an, dn);
-            }
+                .and_then(|(&dn, _)| targeting.insert(an, dn));
         }
-        // if b == 187 {
-        //     dbg!(&targeting);
-        // }
-        // dbg!(groups
-        //     .iter()
-        //     .sorted_by_key(|(_, g)| g.init)
-        //     .map(|(&an, _)| an)
-        //     .collect_vec());
         for an in groups
             .iter()
             .sorted_by_key(|(_, g)| g.init)
@@ -145,14 +114,8 @@ fn solve(mut groups: HashMap<usize, Group>, b: u32) -> Option<(u8, u32)> {
             .collect_vec()
         {
             if !groups.contains_key(&an) || !targeting.contains_key(&an) {
-                // if b == 187 {
-                //     dbg!(an);
-                // }
                 continue;
             }
-            // if b == 187 {
-            //     dbg!(an);
-            // }
             let dg = &groups[&targeting[&an]];
             let deaths = groups[&an].dmg(dg) / dg.hp;
             if deaths >= dg.units {
@@ -161,19 +124,11 @@ fn solve(mut groups: HashMap<usize, Group>, b: u32) -> Option<(u8, u32)> {
                 groups.get_mut(&targeting[&an]).unwrap().units -= deaths;
             }
         }
-        // if b == 187 {
-        // dbg!(&groups);
-        //
-        // }
         let new_units = groups.values().map(|g| g.units).sum();
-        if groups.values().map(|g| g.team).all_equal() {
-            // dbg!(new_units);
-            return Some((groups.values().next().unwrap().team, new_units));
-        }
         if new_units == units {
-            dbg!(new_units);
-            // return None;
+            return None;
         }
-            units = new_units;
+        units = new_units;
     }
+    Some((groups.values().next().unwrap().team, units))
 }
