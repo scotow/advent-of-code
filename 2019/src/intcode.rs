@@ -26,13 +26,14 @@ impl Program {
         &mut self.memory[i]
     }
 
-    pub fn run(&mut self) {
+    pub fn run(&mut self) -> Status {
         loop {
             let op = Op::new(&self.memory[self.ptr..]);
             match op.exec(self) {
-                OpResult::Exit => return,
+                OpResult::Exit => return Status::Halted,
+                OpResult::NoInput => return Status::Paused,
                 OpResult::Relative(n) => self.ptr = (self.ptr as isize + n) as usize,
-                OpResult::Absoulte(n) => self.ptr = n,
+                OpResult::Absolute(n) => self.ptr = n,
             }
         }
     }
@@ -44,6 +45,12 @@ impl Program {
     pub fn pull(&mut self) -> Option<i64> {
         self.output.pop_front()
     }
+}
+
+#[derive(Copy, Clone, Debug)]
+pub enum Status {
+    Halted,
+    Paused,
 }
 
 #[derive(Clone, Debug)]
@@ -75,7 +82,6 @@ impl Op {
 
     pub(crate) fn exec(self, prog: &mut Program) -> OpResult {
         match self.code {
-            99 => return OpResult::Exit,
             1 => {
                 *self.args[2].to_mem_mut(&mut prog.memory) =
                     self.args[0].to_value(&prog.memory) + self.args[1].to_value(&prog.memory);
@@ -87,8 +93,12 @@ impl Op {
                 OpResult::Relative(1 + self.args.len() as isize)
             }
             3 => {
-                *self.args[0].to_mem_mut(&mut prog.memory) = prog.input.pop_front().unwrap();
-                OpResult::Relative(1 + self.args.len() as isize)
+                if let Some(input) = prog.input.pop_front() {
+                    *self.args[0].to_mem_mut(&mut prog.memory) = input;
+                    OpResult::Relative(1 + self.args.len() as isize)
+                } else {
+                    OpResult::NoInput
+                }
             }
             4 => {
                 prog.output.push_back(self.args[0].to_value(&prog.memory));
@@ -96,14 +106,14 @@ impl Op {
             }
             5 => {
                 if self.args[0].to_value(&prog.memory) != 0 {
-                    OpResult::Absoulte(self.args[1].to_value(&prog.memory) as usize)
+                    OpResult::Absolute(self.args[1].to_value(&prog.memory) as usize)
                 } else {
                     OpResult::Relative(1 + self.args.len() as isize)
                 }
             }
             6 => {
                 if self.args[0].to_value(&prog.memory) == 0 {
-                    OpResult::Absoulte(self.args[1].to_value(&prog.memory) as usize)
+                    OpResult::Absolute(self.args[1].to_value(&prog.memory) as usize)
                 } else {
                     OpResult::Relative(1 + self.args.len() as isize)
                 }
@@ -120,6 +130,7 @@ impl Op {
                     as i64;
                 OpResult::Relative(1 + self.args.len() as isize)
             }
+            99 => OpResult::Exit,
             _ => unreachable!(),
         }
     }
@@ -128,12 +139,13 @@ impl Op {
 #[derive(Copy, Clone, Debug)]
 pub(crate) enum OpResult {
     Exit,
+    NoInput,
     Relative(isize),
-    Absoulte(usize),
+    Absolute(usize),
 }
 
 #[derive(Copy, Clone, Debug)]
-pub enum Arg {
+pub(crate) enum Arg {
     Pos(i64),
     Immediate(i64),
 }
