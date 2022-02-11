@@ -3,7 +3,7 @@ macro_rules! main {
     () => {
         #[allow(dead_code)]
         use {
-            advent_of_code_2019::{abs_diff, m_dist},
+            advent_of_code_2019::{abs_diff, intcode::*, m_dist},
             itertools::{chain, iproduct, FoldWhile, Itertools},
             std::collections::{HashMap, HashSet, VecDeque},
             std::fmt::{Debug, Display, Formatter},
@@ -22,6 +22,8 @@ macro_rules! main {
         }
     };
 }
+
+pub mod intcode;
 
 use std::ops::Sub;
 
