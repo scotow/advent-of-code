@@ -5,6 +5,7 @@ macro_rules! main {
         use {
             advent_of_code_2019::{abs_diff, intcode::*, m_dist},
             itertools::{chain, iproduct, FoldWhile, Itertools},
+            std::cmp::Ordering,
             std::collections::{HashMap, HashSet, VecDeque},
             std::fmt::{Debug, Display, Formatter},
             std::iter::{once, successors},
@@ -49,7 +50,7 @@ macro_rules! m_dist {
     }
 }
 
-pub fn abs_diff<T: Sub<Output = T> + Ord>(x: T, y: T) -> T {
+pub fn abs_diff<T: Sub<Output = T> + PartialOrd>(x: T, y: T) -> T {
     if x < y {
         y - x
     } else {
