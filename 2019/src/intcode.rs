@@ -77,67 +77,62 @@ impl Op {
         Self {
             code: prog.byte(prog.ptr) % 100,
             args: (1..=args_len)
-                .map(|n| (n, prog.byte(prog.ptr + n)))
-                .map(|(n, v)| Arg::new(prog.byte(prog.ptr) / 10i64.pow(n as u32 + 1) % 10, v))
+                .map(|n| {
+                    Arg::new(
+                        prog.byte(prog.ptr) / 10i64.pow(n as u32 + 1) % 10,
+                        prog.byte(prog.ptr + n),
+                    )
+                })
                 .collect(),
         }
     }
 
     pub(crate) fn exec(self, prog: &mut Program) -> OpResult {
+        let mut op_res = OpResult::Relative(1 + self.args.len() as isize);
         match self.code {
             1 => {
                 *self.args[2].to_mem_mut(prog) =
                     self.args[0].to_value(prog) + self.args[1].to_value(prog);
-                OpResult::Relative(1 + self.args.len() as isize)
             }
             2 => {
                 *self.args[2].to_mem_mut(prog) =
                     self.args[0].to_value(prog) * self.args[1].to_value(prog);
-                OpResult::Relative(1 + self.args.len() as isize)
             }
             3 => {
                 if let Some(input) = prog.input.pop_front() {
                     *self.args[0].to_mem_mut(prog) = input;
-                    OpResult::Relative(1 + self.args.len() as isize)
                 } else {
-                    OpResult::NoInput
+                    op_res = OpResult::NoInput;
                 }
             }
             4 => {
                 prog.output.push_back(self.args[0].to_value(prog));
-                OpResult::Relative(1 + self.args.len() as isize)
             }
             5 => {
                 if self.args[0].to_value(prog) != 0 {
-                    OpResult::Absolute(self.args[1].to_value(prog) as usize)
-                } else {
-                    OpResult::Relative(1 + self.args.len() as isize)
+                    op_res = OpResult::Absolute(self.args[1].to_value(prog) as usize)
                 }
             }
             6 => {
                 if self.args[0].to_value(prog) == 0 {
-                    OpResult::Absolute(self.args[1].to_value(prog) as usize)
-                } else {
-                    OpResult::Relative(1 + self.args.len() as isize)
+                    op_res = OpResult::Absolute(self.args[1].to_value(prog) as usize)
                 }
             }
             7 => {
                 *self.args[2].to_mem_mut(prog) =
                     (self.args[0].to_value(prog) < self.args[1].to_value(prog)) as i64;
-                OpResult::Relative(1 + self.args.len() as isize)
             }
             8 => {
                 *self.args[2].to_mem_mut(prog) =
                     (self.args[0].to_value(prog) == self.args[1].to_value(prog)) as i64;
-                OpResult::Relative(1 + self.args.len() as isize)
             }
             9 => {
                 prog.arg_offset += self.args[0].to_value(prog) as isize;
-                OpResult::Relative(1 + self.args.len() as isize)
             }
-            99 => OpResult::Exit,
+            99 => op_res = OpResult::Exit,
             _ => unreachable!(),
         }
+        op_res
     }
 }
 
