@@ -1,20 +1,22 @@
-use std::collections::VecDeque;
+use std::collections::{HashMap, VecDeque};
 
 #[derive(Clone, Debug)]
 pub struct Program {
-    pub(crate) memory: Vec<i64>,
+    pub(crate) memory: HashMap<usize, i64>,
     ptr: usize,
     pub(crate) input: VecDeque<i64>,
     pub(crate) output: VecDeque<i64>,
+    pub(crate) arg_offset: isize,
 }
 
 impl Program {
     pub fn new(mem: Vec<i64>) -> Self {
         Self {
-            memory: mem,
+            memory: mem.into_iter().enumerate().collect(),
             ptr: 0,
             input: VecDeque::new(),
             output: VecDeque::new(),
+            arg_offset: 0,
         }
     }
 
@@ -22,13 +24,17 @@ impl Program {
         Self::new(s.split(',').map(|n| n.parse().unwrap()).collect())
     }
 
-    pub fn byte(&mut self, i: usize) -> &mut i64 {
-        &mut self.memory[i]
+    pub fn byte(&self, i: usize) -> i64 {
+        *self.memory.get(&i).unwrap_or(&0)
+    }
+
+    pub fn byte_mut(&mut self, i: usize) -> &mut i64 {
+        self.memory.entry(i).or_insert(0)
     }
 
     pub fn run(&mut self) -> Status {
         loop {
-            let op = Op::new(&self.memory[self.ptr..]);
+            let op = Op::new(self);
             match op.exec(self) {
                 OpResult::Exit => return Status::Halted,
                 OpResult::NoInput => return Status::Paused,
@@ -60,22 +66,19 @@ pub struct Op {
 }
 
 impl Op {
-    pub(crate) fn new(mem: &[i64]) -> Self {
-        let args_len = match mem[0] % 100 {
+    pub(crate) fn new(prog: &Program) -> Self {
+        let args_len = match prog.byte(prog.ptr) % 100 {
             99 => 0,
-            3 | 4 => 1,
+            3 | 4 | 9 => 1,
             5 | 6 => 2,
             1 | 2 | 7 | 8 => 3,
             _ => unreachable!(),
         };
         Self {
-            code: mem[0] % 100,
-            args: mem
-                .into_iter()
-                .skip(1)
-                .take(args_len)
-                .enumerate()
-                .map(|(n, &v)| Arg::new(mem[0] / 10i64.pow(n as u32 + 2) % 10, v))
+            code: prog.byte(prog.ptr) % 100,
+            args: (1..=args_len)
+                .map(|n| (n, prog.byte(prog.ptr + n)))
+                .map(|(n, v)| Arg::new(prog.byte(prog.ptr) / 10i64.pow(n as u32 + 1) % 10, v))
                 .collect(),
         }
     }
@@ -83,51 +86,53 @@ impl Op {
     pub(crate) fn exec(self, prog: &mut Program) -> OpResult {
         match self.code {
             1 => {
-                *self.args[2].to_mem_mut(&mut prog.memory) =
-                    self.args[0].to_value(&prog.memory) + self.args[1].to_value(&prog.memory);
+                *self.args[2].to_mem_mut(prog) =
+                    self.args[0].to_value(prog) + self.args[1].to_value(prog);
                 OpResult::Relative(1 + self.args.len() as isize)
             }
             2 => {
-                *self.args[2].to_mem_mut(&mut prog.memory) =
-                    self.args[0].to_value(&prog.memory) * self.args[1].to_value(&prog.memory);
+                *self.args[2].to_mem_mut(prog) =
+                    self.args[0].to_value(prog) * self.args[1].to_value(prog);
                 OpResult::Relative(1 + self.args.len() as isize)
             }
             3 => {
                 if let Some(input) = prog.input.pop_front() {
-                    *self.args[0].to_mem_mut(&mut prog.memory) = input;
+                    *self.args[0].to_mem_mut(prog) = input;
                     OpResult::Relative(1 + self.args.len() as isize)
                 } else {
                     OpResult::NoInput
                 }
             }
             4 => {
-                prog.output.push_back(self.args[0].to_value(&prog.memory));
+                prog.output.push_back(self.args[0].to_value(prog));
                 OpResult::Relative(1 + self.args.len() as isize)
             }
             5 => {
-                if self.args[0].to_value(&prog.memory) != 0 {
-                    OpResult::Absolute(self.args[1].to_value(&prog.memory) as usize)
+                if self.args[0].to_value(prog) != 0 {
+                    OpResult::Absolute(self.args[1].to_value(prog) as usize)
                 } else {
                     OpResult::Relative(1 + self.args.len() as isize)
                 }
             }
             6 => {
-                if self.args[0].to_value(&prog.memory) == 0 {
-                    OpResult::Absolute(self.args[1].to_value(&prog.memory) as usize)
+                if self.args[0].to_value(prog) == 0 {
+                    OpResult::Absolute(self.args[1].to_value(prog) as usize)
                 } else {
                     OpResult::Relative(1 + self.args.len() as isize)
                 }
             }
             7 => {
-                *self.args[2].to_mem_mut(&mut prog.memory) = (self.args[0].to_value(&prog.memory)
-                    < self.args[1].to_value(&prog.memory))
-                    as i64;
+                *self.args[2].to_mem_mut(prog) =
+                    (self.args[0].to_value(prog) < self.args[1].to_value(prog)) as i64;
                 OpResult::Relative(1 + self.args.len() as isize)
             }
             8 => {
-                *self.args[2].to_mem_mut(&mut prog.memory) = (self.args[0].to_value(&prog.memory)
-                    == self.args[1].to_value(&prog.memory))
-                    as i64;
+                *self.args[2].to_mem_mut(prog) =
+                    (self.args[0].to_value(prog) == self.args[1].to_value(prog)) as i64;
+                OpResult::Relative(1 + self.args.len() as isize)
+            }
+            9 => {
+                prog.arg_offset += self.args[0].to_value(prog) as isize;
                 OpResult::Relative(1 + self.args.len() as isize)
             }
             99 => OpResult::Exit,
@@ -148,6 +153,7 @@ pub(crate) enum OpResult {
 pub(crate) enum Arg {
     Pos(i64),
     Immediate(i64),
+    Relative(i64),
 }
 
 impl Arg {
@@ -155,20 +161,23 @@ impl Arg {
         match t {
             0 => Self::Pos(v),
             1 => Self::Immediate(v),
+            2 => Self::Relative(v),
             _ => unreachable!(),
         }
     }
 
-    pub fn to_value(self, mem: &[i64]) -> i64 {
+    pub fn to_value(self, prog: &Program) -> i64 {
         match self {
-            Self::Pos(i) => mem[i as usize],
+            Self::Pos(i) => prog.byte(i as usize),
             Self::Immediate(n) => n,
+            Self::Relative(n) => prog.byte((prog.arg_offset + n as isize) as usize),
         }
     }
 
-    pub fn to_mem_mut(self, mem: &mut [i64]) -> &mut i64 {
+    pub fn to_mem_mut(self, prog: &mut Program) -> &mut i64 {
         match self {
-            Self::Pos(i) => &mut mem[i as usize],
+            Self::Pos(i) => prog.byte_mut(i as usize),
+            Self::Relative(n) => prog.byte_mut((prog.arg_offset + n as isize) as usize),
             _ => unreachable!(),
         }
     }

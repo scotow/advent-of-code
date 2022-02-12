@@ -5,21 +5,21 @@ fn generator(input: &str) -> Program {
 }
 
 fn part_1(mut prog: Program) -> i64 {
-    *prog.byte(1) = 12;
-    *prog.byte(2) = 2;
+    *prog.byte_mut(1) = 12;
+    *prog.byte_mut(2) = 2;
     prog.run();
-    assert_eq!(*prog.byte(0), 5098658);
-    *prog.byte(0)
+    assert_eq!(prog.byte(0), 5098658);
+    prog.byte(0)
 }
 
 fn part_2(prog: Program) -> i64 {
     let (n, v) = iproduct!(0..=99, 0..=99)
         .find(|&(n, v)| {
             let mut prog = prog.clone();
-            *prog.byte(1) = n;
-            *prog.byte(2) = v;
+            *prog.byte_mut(1) = n;
+            *prog.byte_mut(2) = v;
             prog.run();
-            *prog.byte(0) == 19690720
+            prog.byte(0) == 19690720
         })
         .unwrap();
     assert_eq!(n * 100 + v, 5064);
