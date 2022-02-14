@@ -14,7 +14,6 @@ fn part_1(input: Vec<Vec<bool>>) -> usize {
 fn part_2(input: Vec<Vec<bool>>) -> usize {
     let (mut points, (sx, sy), _) = best(input);
     points.remove(&(sx, sy));
-    let mut laser = 0.;
     let mut points = points
         .into_iter()
         .map(|(x, y)| (x, y, angle((sx, sy), (sx, 0), (x, y))))
@@ -24,17 +23,13 @@ fn part_2(input: Vec<Vec<bool>>) -> usize {
                 .then_with(|| m_dist!(x1, y1; sx, sy).cmp(&m_dist!(x2, y2; sx, sy)))
         })
         .collect_vec();
+    let mut laser = -1.;
     for i in 1.. {
-        let (n, &(x, y, f)) = points
-            .iter()
-            .enumerate()
-            .find(|&(_, &(_, _, f))| f >= laser)
-            .unwrap();
-        points.remove(n);
+        let (x, y, f) = points.remove(points.iter().position(|&(_, _, f)| f > laser).unwrap_or(0));
         if i == 200 || points.is_empty() {
             return x * 100 + y;
         }
-        laser = (f + 0.0001) % 360.;
+        laser = f;
     }
     unreachable!()
 }
