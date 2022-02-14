@@ -8,53 +8,71 @@ fn generator(input: &str) -> Vec<Vec<bool>> {
 }
 
 fn part_1(input: Vec<Vec<bool>>) -> usize {
-    // dbg!(&input);
-    let points = iproduct!(0..input[0].len(), 0..input.len())
-        .filter(|&(x, y)| input[y][x])
+    best(input).2
+}
+
+fn part_2(input: Vec<Vec<bool>>) -> usize {
+    let (mut points, (sx, sy), _) = best(input);
+    points.remove(&(sx, sy));
+    let mut laser = 0.;
+    let mut points = points
+        .into_iter()
+        .map(|(x, y)| (x, y, angle((sx, sy), (sx, 0), (x, y))))
+        .sorted_by(|&(x1, y1, f1), &(x2, y2, f2)| {
+            f1.partial_cmp(&f2)
+                .unwrap()
+                .then_with(|| m_dist!(x1, y1; sx, sy).cmp(&m_dist!(x2, y2; sx, sy)))
+        })
+        .collect_vec();
+    for i in 1.. {
+        let (n, &(x, y, f)) = points
+            .iter()
+            .enumerate()
+            .find(|&(_, &(_, _, f))| f >= laser)
+            .unwrap();
+        points.remove(n);
+        if i == 200 || points.is_empty() {
+            return x * 100 + y;
+        }
+        laser = (f + 0.0001) % 360.;
+    }
+    unreachable!()
+}
+
+fn best(grid: Vec<Vec<bool>>) -> (HashSet<(usize, usize)>, (usize, usize), usize) {
+    let points = iproduct!(0..grid[0].len(), 0..grid.len())
+        .filter(|&(x, y)| grid[y][x])
         .collect::<HashSet<_>>();
-    points
+    let (xy, v) = points
         .iter()
-        .map(|&(x, y)| visible(&input, &points, x, y))
-        .max()
-        .unwrap()
-    // visible(&input, &points, 0, 0)
+        .map(|&xy| (xy, visible(&points, xy)))
+        .max_by_key(|(_, v)| *v)
+        .unwrap();
+    (points, xy, v)
 }
 
-fn part_2(input: Vec<Vec<bool>>) -> u8 {
-    0
+fn hide((x, y): (usize, usize), (a, b): (usize, usize), (m, n): (usize, usize)) -> bool {
+    m_dist!(m, n; x, y) > m_dist!(a, b; x, y) && angle((x, y), (a, b), (m, n)) == 0.
 }
 
-fn visible(grid: &Vec<Vec<bool>>, points: &HashSet<(usize, usize)>, ax: usize, ay: usize) -> usize {
+fn angle((x, y): (usize, usize), (a, b): (usize, usize), (m, n): (usize, usize)) -> f64 {
+    (((n as f64 - y as f64).atan2(m as f64 - x as f64)
+        - (b as f64 - y as f64).atan2(a as f64 - x as f64))
+    .to_degrees()
+        + 360.)
+        % 360.
+}
+
+fn visible(points: &HashSet<(usize, usize)>, xy: (usize, usize)) -> usize {
     let mut visible = points.clone();
-    visible.remove(&(ax, ay));
-    for &(ox, oy) in points {
-        if (ox, oy) == (ax, ay) {
+    visible.remove(&xy);
+    for (&a1, &a2) in iproduct!(points.iter(), points.iter()) {
+        if a1 == xy || a2 == xy {
             continue;
         }
-        let (mut dx, mut dy) = (ox as isize - ax as isize, oy as isize - ay as isize);
-        while dx % 2 == 0 && dy % 2 == 0 {
-            dx /= 2;
-            dy /= 2;
+        if hide(xy, a1, a2) {
+            visible.remove(&a2);
         }
-        if dx.abs() == dy.abs() {
-            dx = 1 * dx.signum();
-            dy = 1 * dy.signum();
-        }
-        // dbg!(ox, oy, dx, dy);
-        (1..)
-            .map(|n| {
-                (
-                    (ox as isize + dx * n) as usize,
-                    (oy as isize + dy * n) as usize,
-                )
-            })
-            // .inspect(|&(x, y)| println!("behind: {} {}", x, y))
-            .take_while(|&(x, y)| grid.get(y).and_then(|r| r.get(x)).is_some())
-            // .inspect(|&(x, y)| println!("to remove: {} {}", x, y))
-            .for_each(|(x, y)| {
-                visible.remove(&(x, y));
-            });
     }
-    dbg!(ax, ay, visible.len());
     visible.len()
 }
