@@ -4,7 +4,7 @@ macro_rules! main {
         #[allow(dead_code)]
         use {
             advent_of_code_2019::{abs_diff, intcode::*, m_dist},
-            itertools::{chain, iproduct, FoldWhile, Itertools},
+            itertools::{chain, iproduct, repeat_n, FoldWhile, Itertools},
             num_integer::Integer,
             std::cmp::Ordering,
             std::collections::{HashMap, HashSet, VecDeque},
