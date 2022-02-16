@@ -1,4 +1,3 @@
-use num_integer::Integer;
 advent_of_code_2019::main!();
 
 fn generator(input: &str) -> HashMap<&str, (u64, Vec<(u64, &str)>)> {
