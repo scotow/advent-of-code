@@ -1,4 +1,7 @@
-use std::collections::{HashMap, VecDeque};
+use std::{
+    collections::{HashMap, VecDeque},
+    mem::replace,
+};
 
 #[derive(Clone, Debug)]
 pub struct Program {
@@ -50,6 +53,10 @@ impl Program {
 
     pub fn pull(&mut self) -> Option<i64> {
         self.output.pop_front()
+    }
+
+    pub fn pull_all(&mut self) -> VecDeque<i64> {
+        replace(&mut self.output, VecDeque::new())
     }
 }
 
