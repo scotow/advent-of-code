@@ -1,5 +1,4 @@
-use bitvec::bitarr;
-use bitvec::order::Lsb0;
+use bitvec::prelude::{bitarr, Lsb0};
 use pathfinding::prelude::{bfs, dijkstra};
 
 advent_of_code_2019::main!();
@@ -87,9 +86,8 @@ fn solve<const E: usize>(grid: Grid, es: [Pos; E]) -> usize {
         }
     }
     let paths = keys_pos
-        .clone()
-        .into_iter()
-        .map(|(k, p)| {
+        .iter()
+        .map(|(&k, &p)| {
             (
                 k,
                 keys_pos
@@ -103,32 +101,24 @@ fn solve<const E: usize>(grid: Grid, es: [Pos; E]) -> usize {
     dijkstra(
         &(es, missing),
         |&(es, mks)| {
-            es.into_iter()
-                .enumerate()
-                .flat_map(|(i, xy)| {
-                    paths[&grid[&xy]]
-                        .keys()
-                        .filter_map(|&c| {
-                            let (k, n) = match c {
-                                Cell::Key(n) => (c, n),
-                                _ => unreachable!(),
-                            };
-                            let (d, rks) = match &paths[&grid[&xy]].get(&k) {
-                                Some(r) => r,
-                                None => return None,
-                            };
-                            if rks.into_iter().any(|&rk| mks[rk as usize]) {
-                                return None;
-                            }
-                            let mut mks = mks;
-                            mks.set(n as usize, false);
-                            let mut es = es;
-                            es[i] = keys_pos[&k];
-                            Some(((es, mks), *d))
-                        })
-                        .collect_vec()
+            let (paths, grid, keys_pos) = (&paths, &grid, &keys_pos);
+            es.into_iter().enumerate().flat_map(move |(i, xy)| {
+                let (es, mks) = (es, mks);
+                paths[&grid[&xy]].keys().filter_map(move |&c| {
+                    let (k, n) = match c {
+                        Cell::Key(n) => (c, n),
+                        _ => unreachable!(),
+                    };
+                    let (d, rks) = &paths[&grid[&xy]].get(&k)?;
+                    if rks.into_iter().any(|&rk| mks[rk as usize]) {
+                        return None;
+                    }
+                    let (mut es, mut mks) = (es, mks);
+                    es[i] = keys_pos[&k];
+                    mks.set(n as usize, false);
+                    Some(((es, mks), *d))
                 })
-                .collect_vec()
+            })
         },
         |(_, k)| k.data[0] == 0,
     )
