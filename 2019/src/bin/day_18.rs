@@ -1,10 +1,9 @@
+use bitvec::bitarr;
 use bitvec::order::Lsb0;
-use bitvec::{bitarr, BitArr};
 use pathfinding::prelude::{bfs, dijkstra};
 
 advent_of_code_2019::main!();
 
-type Keys = BitArr!(for 32, in u32, Lsb0);
 type Pos = (usize, usize);
 type Grid = HashMap<Pos, Cell>;
 
@@ -14,30 +13,6 @@ enum Cell {
     Open,
     Key(u8),
     Door(u8),
-}
-
-// #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
-// enum POI {
-//     Start(u8),
-//     Key(u8),
-// }
-
-impl Cell {
-    fn walkable(self /*keys: Keys*/) -> bool {
-        match self {
-            Cell::Open | Cell::Key(_) | Cell::Entrance(_) => true,
-            // Cell::Door(n) if !keys[n as usize] => true,
-            Cell::Door(_) => true,
-            _ => false,
-        }
-    }
-
-    fn key_number(self) -> u8 {
-        match self {
-            Cell::Key(n) => n,
-            _ => unreachable!(),
-        }
-    }
 }
 
 fn generator(input: &str) -> Grid {
@@ -64,13 +39,44 @@ fn generator(input: &str) -> Grid {
         .collect()
 }
 
-fn part_1(mut grid: Grid) -> usize {
-    let (&(ex, ey), &ent) = grid
+fn part_1(grid: Grid) -> usize {
+    let (&(ex, ey), _) = grid
         .iter()
         .find(|(_, c)| matches!(c, Cell::Entrance(_)))
         .unwrap();
+    solve(grid, [(ex, ey)])
+}
+
+fn part_2(mut grid: Grid) -> usize {
+    let (ex, ey) = *grid
+        .iter()
+        .find(|(_, c)| matches!(c, Cell::Entrance(_)))
+        .unwrap()
+        .0;
+    for p in [
+        (ex, ey),
+        (ex, ey - 1),
+        (ex + 1, ey),
+        (ex, ey + 1),
+        (ex - 1, ey),
+    ] {
+        grid.remove(&p);
+    }
+    let es = [
+        (ex - 1, ey - 1),
+        (ex + 1, ey - 1),
+        (ex + 1, ey + 1),
+        (ex - 1, ey + 1),
+    ];
+    for (n, xy) in es.into_iter().enumerate() {
+        grid.insert(xy, Cell::Entrance(n as u8));
+    }
+    solve(grid, es)
+}
+
+fn solve<const E: usize>(grid: Grid, es: [Pos; E]) -> usize {
+    let mut keys_pos = HashMap::from(es.map(|xy| (grid[&xy], xy)));
     let mut missing = bitarr![u32, Lsb0; 0; 32];
-    let mut keys_pos = HashMap::from([(ent, (ex, ey))]);
     for (&p, &c) in grid.iter() {
         match c {
             Cell::Key(k) => {
@@ -80,35 +86,47 @@ fn part_1(mut grid: Grid) -> usize {
             _ => (),
         }
     }
-
-    let paths = chain!(once((ent, (ex, ey))), keys_pos.clone().into_iter())
+    let paths = keys_pos
+        .clone()
+        .into_iter()
         .map(|(k, p)| {
             (
                 k,
                 keys_pos
                     .iter()
-                    .filter(|(&k2, &p2)| k != k2)
+                    .filter(|(&k2, _)| k != k2 && matches!(k2, Cell::Key(_)))
                     .filter_map(|(&k2, &p2)| distance_to(&grid, p, p2).map(|dp| (k2, dp)))
                     .collect::<HashMap<_, _>>(),
             )
         })
         .collect::<HashMap<_, _>>();
-
     dijkstra(
-        &((ex, ey), missing),
-        |&(xy, mks)| {
-            let to_others = &paths[&grid[&xy]];
-            (0..32)
-                .filter(|&k| mks[k as usize])
-                .filter_map(|k| {
-                    if let Some((d, rks)) = to_others.get(&Cell::Key(k)) {
-                        if rks.into_iter().all(|&rk| !mks[rk as usize]) {
+        &(es, missing),
+        |&(es, mks)| {
+            es.into_iter()
+                .enumerate()
+                .flat_map(|(i, xy)| {
+                    paths[&grid[&xy]]
+                        .keys()
+                        .filter_map(|&c| {
+                            let (k, n) = match c {
+                                Cell::Key(n) => (c, n),
+                                _ => unreachable!(),
+                            };
+                            let (d, rks) = match &paths[&grid[&xy]].get(&k) {
+                                Some(r) => r,
+                                None => return None,
+                            };
+                            if rks.into_iter().any(|&rk| mks[rk as usize]) {
+                                return None;
+                            }
                             let mut mks = mks;
-                            mks.set(k as usize, false);
-                            return Some(((keys_pos[&Cell::Key(k)], mks), *d));
-                        }
-                    }
-                    None
+                            mks.set(n as usize, false);
+                            let mut es = es;
+                            es[i] = keys_pos[&k];
+                            Some(((es, mks), *d))
+                        })
+                        .collect_vec()
                 })
                 .collect_vec()
         },
@@ -118,67 +136,8 @@ fn part_1(mut grid: Grid) -> usize {
     .1
 }
 
-fn part_2(mut grid: Grid) -> usize {
-    0
-    // let (ex, ey) = *grid
-    //     .iter()
-    //     .find(|(_, c)| matches!(c, Cell::Entrance))
-    //     .unwrap()
-    //     .0;
-    // for p in [
-    //     (ex, ey),
-    //     (ex, ey - 1),
-    //     (ex + 1, ey),
-    //     (ex, ey + 1),
-    //     (ex - 1, ey),
-    // ] {
-    //     grid.remove(&p);
-    // }
-    // let es = [
-    //     (ex - 1, ey - 1),
-    //     (ex + 1, ey - 1),
-    //     (ex + 1, ey + 1),
-    //     (ex - 1, ey + 1),
-    // ];
-    // let mut missing = bitarr![u32, Lsb0; 0; 32];
-    // let mut keys_pos = HashMap::new();
-    // for (&p, &c) in grid.iter() {
-    //     match c {
-    //         Cell::Key(n) => {
-    //             missing.set(n as usize, true);
-    //             keys_pos.insert(n, p);
-    //         }
-    //         _ => (),
-    //     }
-    // }
-    // dijkstra(
-    //     &(es, missing),
-    //     |&(xys, mks)| {
-    //         (0..32)
-    //             .filter(|&k| mks[k as usize])
-    //             .filter_map(|k| {
-    //                 let pos = keys_pos[&k];
-    //                 for (i, xy) in xys.into_iter().enumerate() {
-    //                     if let Some(d) = distance_to(&grid, xy, pos, mks) {
-    //                         let mut mks = mks;
-    //                         mks.set(k as usize, false);
-    //                         let mut xys = xys;
-    //                         xys[i] = pos;
-    //                         return Some(((xys, mks), d));
-    //                     }
-    //                 }
-    //                 None
-    //             })
-    //             .collect_vec()
-    //     },
-    //     |(_, k)| k.data[0] == 0,
-    // )
-    // .unwrap()
-    // .1
-}
-
 fn distance_to(grid: &Grid, from: Pos, to: Pos) -> Option<(usize, Vec<u8>)> {
-    let path = bfs(
+    bfs(
         &from,
         |&(x, y)| {
             [
@@ -188,11 +147,11 @@ fn distance_to(grid: &Grid, from: Pos, to: Pos) -> Option<(usize, Vec<u8>)> {
                 (x.saturating_sub(1), y),
             ]
             .into_iter()
-            .filter(|xy| grid.get(xy).map(|c| c.walkable()) == Some(true))
+            .filter(|xy| grid.contains_key(xy))
         },
         |&xy| xy == to,
-    );
-    path.map(|p| {
+    )
+    .map(|p| {
         (
             p.len() - 1,
             p.into_iter()
