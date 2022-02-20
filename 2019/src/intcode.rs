@@ -5,11 +5,11 @@ use std::{
 
 #[derive(Clone, Debug)]
 pub struct Program {
-    pub(crate) memory: HashMap<usize, i64>,
+    memory: HashMap<usize, i64>,
     ptr: usize,
-    pub(crate) input: VecDeque<i64>,
-    pub(crate) output: VecDeque<i64>,
-    pub(crate) arg_offset: isize,
+    input: VecDeque<i64>,
+    output: VecDeque<i64>,
+    arg_offset: isize,
 }
 
 impl Program {
@@ -71,13 +71,13 @@ pub enum Status {
 }
 
 #[derive(Clone, Debug)]
-pub struct Op {
+struct Op {
     code: i64,
     args: Vec<Arg>,
 }
 
 impl Op {
-    pub(crate) fn new(prog: &Program) -> Self {
+    fn new(prog: &Program) -> Self {
         let args_len = match prog.byte(prog.ptr) % 100 {
             99 => 0,
             3 | 4 | 9 => 1,
@@ -98,7 +98,7 @@ impl Op {
         }
     }
 
-    pub(crate) fn exec(self, prog: &mut Program) -> OpResult {
+    fn exec(self, prog: &mut Program) -> OpResult {
         let mut op_res = OpResult::Relative(1 + self.args.len() as isize);
         match self.code {
             1 => {
@@ -148,7 +148,7 @@ impl Op {
 }
 
 #[derive(Copy, Clone, Debug)]
-pub(crate) enum OpResult {
+enum OpResult {
     Exit,
     NoInput,
     Relative(isize),
@@ -156,14 +156,14 @@ pub(crate) enum OpResult {
 }
 
 #[derive(Copy, Clone, Debug)]
-pub(crate) enum Arg {
+enum Arg {
     Pos(i64),
     Immediate(i64),
     Relative(i64),
 }
 
 impl Arg {
-    pub fn new(t: i64, v: i64) -> Self {
+    fn new(t: i64, v: i64) -> Self {
         match t {
             0 => Self::Pos(v),
             1 => Self::Immediate(v),
@@ -172,7 +172,7 @@ impl Arg {
         }
     }
 
-    pub fn to_value(self, prog: &Program) -> i64 {
+    fn to_value(self, prog: &Program) -> i64 {
         match self {
             Self::Pos(i) => prog.byte(i as usize),
             Self::Immediate(n) => n,
@@ -180,7 +180,7 @@ impl Arg {
         }
     }
 
-    pub fn to_mem_mut(self, prog: &mut Program) -> &mut i64 {
+    fn to_mem_mut(self, prog: &mut Program) -> &mut i64 {
         match self {
             Self::Pos(i) => prog.byte_mut(i as usize),
             Self::Relative(n) => prog.byte_mut((prog.arg_offset + n as isize) as usize),
