@@ -51,6 +51,10 @@ impl Program {
         self.input.push_back(v);
     }
 
+    pub fn push_multiple<I: IntoIterator<Item = i64>>(&mut self, iter: I) {
+        self.input.extend(iter)
+    }
+
     pub fn pull(&mut self) -> Option<i64> {
         self.output.pop_front()
     }
