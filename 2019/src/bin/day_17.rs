@@ -21,17 +21,14 @@ fn part_1(mut prog: Program) -> i16 {
         }
         x += 1;
     }
-    let res = cell
-        .iter()
+    cell.iter()
         .filter(|&&(x, y)| {
             [(x, y - 1), (x + 1, y), (x, y + 1), (x - 1, y)]
                 .into_iter()
                 .all(|xy| cell.contains(&xy))
         })
         .map(|&(x, y)| (x * y).abs())
-        .sum();
-    assert_eq!(res, 11140);
-    res
+        .sum()
 }
 
 #[allow(unstable_name_collisions)]
@@ -60,7 +57,5 @@ fn part_2(mut prog: Program) -> i64 {
         prog.push(b as i64);
     }
     prog.run();
-    let res = prog.pull_all().pop_back().unwrap();
-    assert_eq!(res, 1113108);
-    res
+    prog.pull_all().pop_back().unwrap()
 }

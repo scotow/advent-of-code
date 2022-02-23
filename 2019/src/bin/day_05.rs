@@ -10,7 +10,6 @@ fn part_1(mut prog: Program) -> i64 {
     loop {
         let code = prog.pull().unwrap();
         if code != 0 {
-            assert_eq!(code, 7839346);
             return code;
         }
     }
@@ -19,7 +18,5 @@ fn part_1(mut prog: Program) -> i64 {
 fn part_2(mut prog: Program) -> i64 {
     prog.push(5);
     prog.run();
-    let code = prog.pull().unwrap();
-    assert_eq!(code, 447803);
-    code
+    prog.pull().unwrap()
 }

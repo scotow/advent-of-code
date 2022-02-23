@@ -5,24 +5,20 @@ fn generator(input: &str) -> Program {
 }
 
 fn part_1(prog: Program) -> i64 {
-    let res = solve(
+    solve(
         prog,
         &["OR A T", "AND B T", "AND C T", "NOT T J", "AND D J", "WALK"],
-    );
-    assert_eq!(res, 19357180);
-    res
+    )
 }
 
 fn part_2(prog: Program) -> i64 {
-    let res = solve(
+    solve(
         prog,
         &[
             "OR A T", "AND B T", "AND C T", "NOT T J", "AND D J", "OR H T", "OR E T", "AND T J",
             "RUN",
         ],
-    );
-    assert_eq!(res, 1139793906);
-    1139793906
+    )
 }
 
 fn solve(mut prog: Program, ops: &[&str]) -> i64 {

@@ -13,7 +13,6 @@ fn part_1(prog: Program) -> i64 {
             computer.run();
             for (t, x, y) in computer.pull_all().into_iter().tuples() {
                 if t == 255 {
-                    assert_eq!(y, 19040);
                     return y;
                 }
                 computers.get_mut(&t).unwrap().push_multiple([x, y]);
@@ -43,7 +42,6 @@ fn part_2(prog: Program) -> i64 {
         }
         if delivered == 0 {
             if last_y == nat.1 {
-                assert_eq!(last_y, 11041);
                 return last_y;
             }
             last_y = nat.1;

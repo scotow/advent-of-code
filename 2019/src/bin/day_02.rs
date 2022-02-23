@@ -8,7 +8,6 @@ fn part_1(mut prog: Program) -> i64 {
     *prog.byte_mut(1) = 12;
     *prog.byte_mut(2) = 2;
     prog.run();
-    assert_eq!(prog.byte(0), 5098658);
     prog.byte(0)
 }
 
@@ -22,6 +21,5 @@ fn part_2(prog: Program) -> i64 {
             prog.byte(0) == 19690720
         })
         .unwrap();
-    assert_eq!(n * 100 + v, 5064);
     n * 100 + v
 }

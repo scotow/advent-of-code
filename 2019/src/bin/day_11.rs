@@ -5,9 +5,7 @@ fn generator(input: &str) -> Program {
 }
 
 fn part_1(prog: Program) -> usize {
-    let res = solve(prog, false).len();
-    assert_eq!(res, 2268);
-    res
+    solve(prog, false).len()
 }
 
 fn part_2(prog: Program) -> String {

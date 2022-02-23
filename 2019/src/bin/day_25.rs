@@ -12,12 +12,7 @@ struct Room {
 impl Room {
     fn parse(prog: &mut Program) -> (Self, String) {
         let info = pull_string(prog);
-        let name = info
-            .lines()
-            .next()
-            .unwrap()
-            .trim_matches(['=', ' '].as_slice())
-            .to_owned();
+        let name = info.lines().next().unwrap().trim_matches(&['=', ' '][..]);
         let mut doors = info
             .lines()
             .filter(|l| l.starts_with("- "))
@@ -30,7 +25,7 @@ impl Room {
                 item,
                 prog: prog.clone(),
             },
-            name,
+            name.to_owned(),
         )
     }
 }
@@ -76,7 +71,7 @@ fn part_1(mut prog: Program) -> i64 {
         .flat_map(|(room, path)| {
             chain!(
                 path.into_iter().cloned(),
-                once(format!("take {}", room.item.as_ref().unwrap().clone())),
+                once(format!("take {}", room.item.as_ref().unwrap())),
                 reverse_path(path),
             )
         })

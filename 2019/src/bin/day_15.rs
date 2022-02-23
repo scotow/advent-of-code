@@ -7,9 +7,7 @@ fn generator(input: &str) -> Program {
 }
 
 fn part_1(prog: Program) -> usize {
-    let res = solve(prog).0;
-    assert_eq!(res, 234);
-    res
+    solve(prog).0
 }
 
 fn part_2(prog: Program) -> usize {
@@ -25,7 +23,6 @@ fn part_2(prog: Program) -> usize {
             .filter(|xy| grid.contains(xy) && !visited.contains(xy))
             .collect::<HashSet<_>>();
         if next.is_empty() {
-            assert_eq!(n, 292);
             return n;
         }
         queue = next;

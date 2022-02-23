@@ -5,11 +5,9 @@ fn generator(input: &str) -> Program {
 }
 
 fn part_1(prog: Program) -> usize {
-    let res = iproduct!(0..50, 0..50)
+    iproduct!(0..50, 0..50)
         .filter(|&(x, y)| affected(&prog, x, y))
-        .count();
-    assert_eq!(res, 138);
-    res
+        .count()
 }
 
 fn part_2(prog: Program) -> i64 {
@@ -22,7 +20,6 @@ fn part_2(prog: Program) -> i64 {
             .take_while(|&x| affected(&prog, x + 99, y))
             .find(|&x| affected(&prog, x, y + 99))
         {
-            assert_eq!(x * 10_000 + y, 13530764);
             return x * 10_000 + y;
         }
         y += 1;

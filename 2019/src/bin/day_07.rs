@@ -5,7 +5,7 @@ fn generator(input: &str) -> Program {
 }
 
 fn part_1(prog: Program) -> i64 {
-    let res = (0..=4)
+    (0..=4)
         .permutations(5)
         .map(|phases| {
             phases.into_iter().fold(0, |signal, phase| {
@@ -17,13 +17,11 @@ fn part_1(prog: Program) -> i64 {
             })
         })
         .max()
-        .unwrap();
-    assert_eq!(res, 277328);
-    res
+        .unwrap()
 }
 
 fn part_2(prog: Program) -> i64 {
-    let res = (5..=9)
+    (5..=9)
         .permutations(5)
         .map(|phases| {
             let mut progs = phases
@@ -49,7 +47,5 @@ fn part_2(prog: Program) -> i64 {
                 .into_inner()
         })
         .max()
-        .unwrap();
-    assert_eq!(res, 11304734);
-    res
+        .unwrap()
 }

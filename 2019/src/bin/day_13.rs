@@ -13,7 +13,6 @@ fn part_1(mut prog: Program) -> usize {
             blocks += 1;
         }
     }
-    assert_eq!(blocks, 286);
     blocks
 }
 
@@ -41,6 +40,5 @@ fn part_2(mut prog: Program) -> i64 {
             }
         }
     }
-    assert_eq!(score, 14538);
     score
 }
