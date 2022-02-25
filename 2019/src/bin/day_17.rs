@@ -11,32 +11,46 @@ fn part_1(mut prog: Program) -> i16 {
         vec!["R12", "L12", "L12"],
         vec!["L6", "L10", "R12", "R12"],
     ];
-    let path = main.into_iter().flat_map(|i| &fs[i]).collect_vec();
-    let f1 = (1..path.len())
-        .rev()
-        .map(|s| path.windows(s).filter(|&w| w == &path[0..s]).count())
-        .filter(|&n| n > 1)
-        .next()
-        .unwrap();
-    let f2 = (1..path.len() - 6)
-        .rev()
-        .map(|s| {
-            path[6..]
-                .windows(s)
-                .filter(|&w| w == &path[6..6 + s])
-                .count()
-        })
-        .filter(|&n| n > 1)
-        .next()
-        .unwrap();
-    dbg!(f1);
-    dbg!(f2);
-    // for s in (1..path.len()).rev() {
-    //     let f1 = &path[0..s];
-    //     let c = path.windows(s).filter(|&w| w == f1).count();
-    //     dbg!(c, f1);
-    // }
+    let path = main.into_iter().flat_map(|i| &fs[i]).copied().collect_vec();
+    dbg!(&path);
 
+    fn find_sub<'a>(path: &'a [&'a str]) -> &'a [&'a str] {
+        (1..path.len())
+            .rev()
+            .map(|s| {
+                (
+                    &path[..s],
+                    path[s..].windows(s).filter(|&w| w == &path[..s]).count(),
+                )
+            })
+            .filter(|(sp, n)| (2..=4).contains(&sp.len()) && *n >= 2)
+            .next()
+            .unwrap()
+            .0
+    }
+
+    fn skip_known<'a, 'b>(mut path: &'a [&'a str], fs: &'b [&'b [&'a str]]) -> &'a [&'a str] {
+        loop {
+            if let Some(f) = fs.into_iter().find(|f| path.starts_with(f)) {
+                path = &path[f.len()..];
+            } else {
+                return path;
+            }
+        }
+        // path
+    }
+
+    let mut remaining = path.as_slice();
+    let f1 = find_sub(remaining);
+    dbg!(f1);
+    remaining = skip_known(remaining, &[f1]);
+
+    let f2 = find_sub(remaining);
+    dbg!(f2);
+    remaining = skip_known(remaining, &[f1, f2]);
+
+    let f3 = find_sub(remaining);
+    dbg!(f3);
     0
 }
 
