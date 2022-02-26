@@ -38,6 +38,7 @@ fn part_2(receipts: HashMap<&str, (u64, Vec<(u64, &str)>)>) -> u64 {
     }
 }
 
+#[allow(unstable_name_collisions)]
 fn solve<'a>(receipts: &HashMap<&'a str, (u64, Vec<(u64, &'a str)>)>, fuels: u64) -> u64 {
     let mut inventory = HashMap::new();
     let mut requirements = HashMap::from([("FUEL", fuels)]);
