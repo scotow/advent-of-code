@@ -1,18 +1,10 @@
-use itertools::Itertools;
-use std::collections::hash_map::DefaultHasher;
-use std::hash::{Hash, Hasher};
-use std::collections::HashSet;
-use Player::*;
+advent_of_code_2020::main!();
 
 type Deck = Vec<u16>;
 
-#[aoc_generator(day22)]
-fn input_generator(input: &str) -> (Deck, Deck) {
+fn generator(input: &str) -> (Deck, Deck) {
     fn parse_deck(s: &str) -> Deck {
-        s.lines()
-            .skip(1)
-            .map(|l| l.parse().unwrap())
-            .collect()
+        s.lines().skip(1).map(|l| l.parse().unwrap()).collect()
     }
 
     input.split("\n\n").map(parse_deck).collect_tuple().unwrap()
@@ -53,17 +45,20 @@ fn run(d1: &mut Deck, d2: &mut Deck) -> Player {
 
     while !d1.is_empty() && !d2.is_empty() {
         if !cache.insert(hash(&d1, &d2)) {
-            return One;
+            return Player::One;
         }
 
         let (c1, c2) = (d1.remove(0), d2.remove(0));
         let w: Player;
         if c1 <= d1.len() as u16 && c2 <= d2.len() as u16 {
-            w = run(&mut d1[..c1 as usize].to_vec(), &mut d2[..c2 as usize].to_vec());
+            w = run(
+                &mut d1[..c1 as usize].to_vec(),
+                &mut d2[..c2 as usize].to_vec(),
+            );
         } else {
-            w = if c1 > c2 { One } else { Two }
+            w = if c1 > c2 { Player::One } else { Player::Two }
         }
-        if w == One {
+        if w == Player::One {
             d1.append(&mut vec![c1, c2]);
         } else {
             d2.append(&mut vec![c2, c1]);
@@ -71,14 +66,13 @@ fn run(d1: &mut Deck, d2: &mut Deck) -> Player {
     }
 
     if d2.is_empty() {
-        One
+        Player::One
     } else {
-        Two
+        Player::Two
     }
 }
 
-#[aoc(day22, part1)]
-fn part1(input: &(Deck, Deck)) -> u16 {
+fn part_1(input: (Deck, Deck)) -> u16 {
     let (mut d1, mut d2) = (input.0.clone(), input.1.clone());
     while !d1.is_empty() && !d2.is_empty() {
         next(&mut d1, &mut d2);
@@ -87,10 +81,9 @@ fn part1(input: &(Deck, Deck)) -> u16 {
     score(if d1.is_empty() { &d2 } else { &d1 })
 }
 
-#[aoc(day22, part2)]
-fn part2(input: &(Deck, Deck)) -> u16 {
+fn part_2(input: (Deck, Deck)) -> u16 {
     let (mut d1, mut d2) = (input.0.clone(), input.1.clone());
     let w = run(&mut d1, &mut d2);
 
-    score(if w == One { &d1 } else { &d2 })
+    score(if w == Player::One { &d1 } else { &d2 })
 }

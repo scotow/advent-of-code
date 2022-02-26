@@ -1,7 +1,4 @@
-use itertools::Itertools;
-use std::str::FromStr;
-use crate::day_19::Rule::*;
-use std::collections::HashMap;
+advent_of_code_2020::main!();
 
 type SubRule = Vec<u8>;
 
@@ -15,27 +12,25 @@ impl FromStr for Rule {
     type Err = ();
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(
-            if s.starts_with('"') {
-                Terminal(s.as_bytes()[1])
-            } else {
-                let parts = s.split(" | ").collect_vec();
-                let right = parse_sub_rule(parts[0]);
-                match parts.len() {
-                    1 => Recursive(right, None),
-                    2 => Recursive(right, Some(parse_sub_rule(parts[1]))),
-                    _ => unreachable!(),
-                }
+        Ok(if s.starts_with('"') {
+            Rule::Terminal(s.as_bytes()[1])
+        } else {
+            let parts = s.split(" | ").collect_vec();
+            let right = parse_sub_rule(parts[0]);
+            match parts.len() {
+                1 => Rule::Recursive(right, None),
+                2 => Rule::Recursive(right, Some(parse_sub_rule(parts[1]))),
+                _ => unreachable!(),
             }
-        )
+        })
     }
 }
 
 impl Rule {
     fn resolve(&self, map: &HashMap<u8, Rule>) -> Vec<Vec<u8>> {
         match self {
-            Terminal(c) => vec![vec![*c]],
-            Recursive(r1, p2) => {
+            Rule::Terminal(c) => vec![vec![*c]],
+            Rule::Recursive(r1, p2) => {
                 let mut res = Rule::resolve_sub_rule(&map, r1);
                 if let Some(p2) = p2 {
                     res.append(&mut Rule::resolve_sub_rule(&map, p2))
@@ -49,7 +44,8 @@ impl Rule {
         let mut res = map[&r[0]].resolve(&map);
         for k in r.iter().skip(1) {
             let act = map[k].resolve(&map);
-            res = res.into_iter()
+            res = res
+                .into_iter()
                 .cartesian_product(act)
                 .map(|(x, y)| [x, y].concat())
                 .collect()
@@ -62,10 +58,10 @@ fn parse_sub_rule(s: &str) -> SubRule {
     s.split(' ').map(|n| n.parse().unwrap()).collect()
 }
 
-#[aoc_generator(day19)]
-fn input_generator(input: &str) -> (HashMap<u8, Rule>, Vec<Vec<u8>>) {
+fn generator(input: &str) -> (HashMap<u8, Rule>, Vec<Vec<u8>>) {
     let (rules, messages) = input.split("\n\n").collect_tuple().unwrap();
-    let rules = rules.lines()
+    let rules = rules
+        .lines()
         .map(|l| {
             let (id, rule) = l.split(": ").collect_tuple().unwrap();
             (id.parse().unwrap(), rule.parse().unwrap())
@@ -86,29 +82,30 @@ fn has_prefix(m: &[u8], r1: &[Vec<u8>], r2: &[Vec<u8>]) -> bool {
 fn has_middle(m: &[u8], r1: &[Vec<u8>], r2: &[Vec<u8>]) -> bool {
     r1.iter()
         .cartesian_product(r2.iter())
-        .filter(|&(x, y)| {
-            m.starts_with(x) && m.ends_with(y) && x.len() + y.len() <= m.len()
-        })
+        .filter(|&(x, y)| m.starts_with(x) && m.ends_with(y) && x.len() + y.len() <= m.len())
         .map(|(x, y)| &m[x.len()..(m.len() - y.len())])
         .any(|m| m.len() == 0 || has_middle(m, r1, r2))
 }
 
-#[aoc(day19, part1)]
-fn part1(input: &(HashMap<u8, Rule>, Vec<Vec<u8>>)) -> usize {
+fn part_1(input: (HashMap<u8, Rule>, Vec<Vec<u8>>)) -> usize {
     let possibilities = input.0[&0].resolve(&input.0);
-    input.1.iter()
+    input
+        .1
+        .iter()
         .filter(|&m| possibilities.contains(m))
         .count()
 }
 
-#[aoc(day19, part2)]
-fn part2(input: &(HashMap<u8, Rule>, Vec<Vec<u8>>)) -> usize {
-    input.1.iter()
+fn part_2(input: (HashMap<u8, Rule>, Vec<Vec<u8>>)) -> usize {
+    input
+        .1
+        .iter()
         .filter(|m| {
             has_prefix(
                 m,
                 &input.0[&42].resolve(&input.0),
-                &input.0[&31].resolve(&input.0)
+                &input.0[&31].resolve(&input.0),
             )
-        }).count()
+        })
+        .count()
 }

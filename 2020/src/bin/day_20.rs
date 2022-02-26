@@ -1,21 +1,25 @@
-use std::collections::HashMap;
-use itertools::Itertools;
-use itertools::iproduct;
-use std::convert::TryInto;
-use std::fmt::{Debug, Formatter, Write};
-use std::cmp::Ordering;
+advent_of_code_2020::main!();
 
 const TILE_SIZE: usize = 10;
 const MONSTER: [[bool; 20]; 3] = [
-    [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true,  false],
-    [true,  false, false, false, false, true,  true,  false, false, false, false, true,  true,  false, false, false, false, true,  true,  true ],
-    [false, true,  false, false, true,  false, false, true,  false, false, true,  false, false, true,  false, false, true,  false, false, false],
+    [
+        false, false, false, false, false, false, false, false, false, false, false, false, false,
+        false, false, false, false, false, true, false,
+    ],
+    [
+        true, false, false, false, false, true, true, false, false, false, false, true, true,
+        false, false, false, false, true, true, true,
+    ],
+    [
+        false, true, false, false, true, false, false, true, false, false, true, false, false,
+        true, false, false, true, false, false, false,
+    ],
 ];
 
 #[derive(Clone)]
 struct Tile {
     id: u64,
-    cells: [[bool; TILE_SIZE]; TILE_SIZE]
+    cells: [[bool; TILE_SIZE]; TILE_SIZE],
 }
 
 impl Tile {
@@ -47,22 +51,21 @@ impl Tile {
         match side {
             Side::Top => self.cells[0],
             Side::Bottom => self.cells[TILE_SIZE - 1],
-            Side::Left => self.cells.iter().map(|l| l[0]).collect_vec().try_into().unwrap(),
-            Side::Right => self.cells.iter().map(|l| l[TILE_SIZE - 1]).collect_vec().try_into().unwrap(),
+            Side::Left => self
+                .cells
+                .iter()
+                .map(|l| l[0])
+                .collect_vec()
+                .try_into()
+                .unwrap(),
+            Side::Right => self
+                .cells
+                .iter()
+                .map(|l| l[TILE_SIZE - 1])
+                .collect_vec()
+                .try_into()
+                .unwrap(),
         }
-    }
-}
-
-impl Debug for Tile {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}\n", self.id).unwrap();
-        for l in self.cells {
-            for c in l {
-                f.write_char(if c { '#' } else { '.' }).unwrap();
-            }
-            f.write_char('\n').unwrap();
-        }
-        Ok(())
     }
 }
 
@@ -94,21 +97,26 @@ impl Side {
     }
 }
 
-#[aoc_generator(day20)]
-fn input_generator(input: &str) -> Vec<Tile> {
-    input.split("\n\n")
+fn generator(input: &str) -> Vec<Tile> {
+    input
+        .split("\n\n")
         .map(|t| t.splitn(2, '\n').collect_tuple().unwrap())
-        .map(|(t, d)| (
-            Tile {
-                id: t.replace("Tile ", "").replace(':', "").parse().unwrap(),
-                cells: d.lines()
-                    .map(|l| l.as_bytes().iter()
+        .map(|(t, d)| Tile {
+            id: t.replace("Tile ", "").replace(':', "").parse().unwrap(),
+            cells: d
+                .lines()
+                .map(|l| {
+                    l.as_bytes()
+                        .iter()
                         .map(|&c| c == b'#')
-                        .collect_vec().try_into().unwrap()
-                    )
-                    .collect_vec().try_into().unwrap()
-            }
-        ))
+                        .collect_vec()
+                        .try_into()
+                        .unwrap()
+                })
+                .collect_vec()
+                .try_into()
+                .unwrap(),
+        })
         .collect()
 }
 
@@ -136,8 +144,13 @@ fn assemble_image(mut remaining: Vec<Tile>) -> HashMap<(isize, isize), Tile> {
     image
 }
 
-fn find_corner(tiles: &HashMap<(isize, isize), Tile>, x_cmp: Ordering, y_cmp: Ordering) -> ((isize, isize), &Tile) {
-    tiles.iter()
+fn find_corner(
+    tiles: &HashMap<(isize, isize), Tile>,
+    x_cmp: Ordering,
+    y_cmp: Ordering,
+) -> ((isize, isize), &Tile) {
+    tiles
+        .iter()
         .map(|(&p, t)| (p, t))
         .reduce(|((x1, y1), t1), ((x2, y2), t2)| {
             if x1 == x2 || x1.cmp(&x2) == x_cmp && y1 == y2 || y1.cmp(&y2) == y_cmp {
@@ -183,19 +196,17 @@ fn image_possibilities(image: &Vec<Vec<bool>>) -> Vec<Vec<Vec<bool>>> {
         .collect()
 }
 
-
-
-#[aoc(day20, part1)]
-fn part1(input: &Vec<Tile>) -> u64 {
+fn part_1(input: Vec<Tile>) -> u64 {
     let tiles = assemble_image(input.clone());
-    find_corner(&tiles, Ordering::Less, Ordering::Greater).1.id *
-        find_corner(&tiles, Ordering::Greater, Ordering::Greater).1.id *
-        find_corner(&tiles, Ordering::Less, Ordering::Less).1.id *
-        find_corner(&tiles, Ordering::Greater, Ordering::Less).1.id
+    find_corner(&tiles, Ordering::Less, Ordering::Greater).1.id
+        * find_corner(&tiles, Ordering::Greater, Ordering::Greater)
+            .1
+            .id
+        * find_corner(&tiles, Ordering::Less, Ordering::Less).1.id
+        * find_corner(&tiles, Ordering::Greater, Ordering::Less).1.id
 }
 
-#[aoc(day20, part2)]
-fn part2(input: &Vec<Tile>) -> usize {
+fn part_2(input: Vec<Tile>) -> usize {
     let tiles = assemble_image(input.clone());
     let bottom_left = find_corner(&tiles, Ordering::Less, Ordering::Less).0;
     let top_right = find_corner(&tiles, Ordering::Greater, Ordering::Greater).0;
@@ -204,15 +215,24 @@ fn part2(input: &Vec<Tile>) -> usize {
         vec![false; (top_right.0 - bottom_left.0 + 1) as usize * (TILE_SIZE - 2)];
         (top_right.1 - bottom_left.1 + 1) as usize * (TILE_SIZE - 2)
     ];
-    for (t_x, t_y, y, x) in iproduct!(bottom_left.0..=top_right.0, bottom_left.1..=top_right.1, 0..TILE_SIZE - 2, 0..TILE_SIZE - 2) {
-        image
-            [((top_right.1 - bottom_left.1) - -(bottom_left.1 - t_y)) as usize * (TILE_SIZE - 2) + y]
-            [-(bottom_left.0 - t_x) as usize * (TILE_SIZE - 2) + x] = tiles[&(t_x, t_y)].cells[y + 1][x + 1];
+    for (t_x, t_y, y, x) in iproduct!(
+        bottom_left.0..=top_right.0,
+        bottom_left.1..=top_right.1,
+        0..TILE_SIZE - 2,
+        0..TILE_SIZE - 2
+    ) {
+        image[((top_right.1 - bottom_left.1) - -(bottom_left.1 - t_y)) as usize
+            * (TILE_SIZE - 2)
+            + y][-(bottom_left.0 - t_x) as usize * (TILE_SIZE - 2) + x] =
+            tiles[&(t_x, t_y)].cells[y + 1][x + 1];
     }
 
     for mut variant in image_possibilities(&image) {
         let mut count = 0;
-        'origin: for (y, x) in iproduct!(0..variant.len() - MONSTER.len() + 1, 0..variant[0].len() - MONSTER[0].len() + 1) {
+        'origin: for (y, x) in iproduct!(
+            0..variant.len() - MONSTER.len() + 1,
+            0..variant[0].len() - MONSTER[0].len() + 1
+        ) {
             for (m_y, m_x) in iproduct!(0..MONSTER.len(), 0..MONSTER[0].len()) {
                 if MONSTER[m_y][m_x] {
                     if !variant[y + m_y][x + m_x] {
@@ -228,7 +248,8 @@ fn part2(input: &Vec<Tile>) -> usize {
             count += 1;
         }
         if count >= 1 {
-            return variant.iter()
+            return variant
+                .iter()
                 .map(|l| l.iter().filter(|&&c| c).count())
                 .sum();
         }

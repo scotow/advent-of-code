@@ -1,6 +1,11 @@
-#[aoc_generator(day23)]
-pub fn input_generator(input: &str) -> Vec<u32> {
-    input.as_bytes().iter().map(|&c| (c - b'0') as u32).collect()
+advent_of_code_2020::main!();
+
+fn generator(input: &str) -> Vec<u32> {
+    input
+        .as_bytes()
+        .iter()
+        .map(|&c| (c - b'0') as u32)
+        .collect()
 }
 
 fn solve(circle: &mut Vec<u32>, moves: usize) {
@@ -26,7 +31,7 @@ fn solve(circle: &mut Vec<u32>, moves: usize) {
             } else {
                 destination -= 1;
             }
-        };
+        }
 
         let destination_index = circle.iter().position(|&c| c == destination).unwrap();
         for (i, c) in picked.into_iter().enumerate() {
@@ -41,17 +46,21 @@ fn solve(circle: &mut Vec<u32>, moves: usize) {
     }
 }
 
-#[aoc(day23, part1)]
-pub fn part1(input: &Vec<u32>) -> String {
+fn part_1(input: Vec<u32>) -> String {
     let mut circle = input.clone();
     solve(&mut circle, 100);
     let one_index = circle.iter().position(|&c| c == 1).unwrap();
     let (p2, p1) = circle.split_at(one_index);
-    String::from_utf8([p1, p2].concat()[1..].iter().map(|&c| b'0' + c as u8).collect()).unwrap()
+    String::from_utf8(
+        [p1, p2].concat()[1..]
+            .iter()
+            .map(|&c| b'0' + c as u8)
+            .collect(),
+    )
+    .unwrap()
 }
 
-#[aoc(day23, part2)]
-pub fn part2(input: &Vec<u32>) -> u64 {
+fn part_2(input: Vec<u32>) -> u64 {
     let mut circle = input.clone();
     circle.reserve(1_000_000);
     let max = *circle.iter().max().unwrap();
