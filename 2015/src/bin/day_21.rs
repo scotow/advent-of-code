@@ -1,8 +1,7 @@
-use itertools::Itertools;
-use itertools::iproduct;
+advent_of_code_2015::main!();
 
 #[derive(Copy, Clone, Debug)]
-pub struct Entity {
+struct Entity {
     hp: i16,
     damage: i16,
     armor: i16,
@@ -14,13 +13,7 @@ impl Entity {
     }
 }
 
-const WEAPONS: [(i16, i16, i16); 5] = [
-    (8, 4, 0),
-    (10, 5, 0),
-    (25, 6, 0),
-    (40, 7, 0),
-    (74, 8, 0),
-];
+const WEAPONS: [(i16, i16, i16); 5] = [(8, 4, 0), (10, 5, 0), (25, 6, 0), (40, 7, 0), (74, 8, 0)];
 const ARMORS: [(i16, i16, i16); 6] = [
     (0, 0, 0),
     (13, 0, 1),
@@ -39,29 +32,27 @@ const RINGS: [(i16, i16, i16); 7] = [
     (40, 0, 2),
 ];
 
-#[aoc_generator(day21)]
-pub fn input_generator(input: &str) -> Entity {
-    let (hp, damage, armor) = input.lines()
+fn generator(input: &str) -> Entity {
+    let (hp, damage, armor) = input
+        .lines()
         .map(|l| l.split_once(": ").unwrap().1.parse().unwrap())
-        .collect_tuple().unwrap();
+        .collect_tuple()
+        .unwrap();
     Entity { hp, damage, armor }
 }
 
-#[aoc(day21, part1)]
-pub fn part1(boss: &Entity) -> i16 {
-    solve(*boss)
-        .filter_map(|(w, g)| w.then(|| g))
-        .min().unwrap()
+fn part_1(boss: Entity) -> i16 {
+    solve(boss).filter_map(|(w, g)| w.then(|| g)).min().unwrap()
 }
 
-#[aoc(day21, part2)]
-pub fn part2(boss: &Entity) -> i16 {
-    solve(*boss)
+fn part_2(boss: Entity) -> i16 {
+    solve(boss)
         .filter_map(|(w, g)| (!w).then(|| g))
-        .max().unwrap()
+        .max()
+        .unwrap()
 }
 
-fn solve(boss: Entity) -> impl Iterator<Item=(bool, i16)> {
+fn solve(boss: Entity) -> impl Iterator<Item = (bool, i16)> {
     iproduct!(WEAPONS, ARMORS, RINGS, RINGS)
         .filter(|&(_, _, r1, r2)| r1 != r2 || r1 == (0, 0, 0))
         .map(move |(w, a, r1, r2)| {
@@ -72,7 +63,7 @@ fn solve(boss: Entity) -> impl Iterator<Item=(bool, i16)> {
             };
             (play(player, boss), w.0 + a.0 + r1.0 + r2.0)
         })
-} 
+}
 
 fn play(mut player: Entity, mut boss: Entity) -> bool {
     loop {

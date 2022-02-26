@@ -1,31 +1,30 @@
-use std::collections::{HashMap, HashSet};
-use itertools::Itertools;
+advent_of_code_2015::main!();
+
 use rand::prelude::SliceRandom;
 
-#[aoc_generator(day19)]
-pub fn input_generator(input: &str) -> (HashMap<String, Vec<String>>, String) {
+fn generator(input: &str) -> (HashMap<String, Vec<String>>, String) {
     let (replacements, molecule) = input.split_once("\n\n").unwrap();
     (
-        replacements.lines()
+        replacements
+            .lines()
             .map(|l| l.split_once(" => ").unwrap())
             .fold(HashMap::new(), |mut map, (from, to)| {
                 let entry = map.entry(from.to_owned()).or_insert(Vec::new());
                 entry.push(to.to_owned());
                 map
             }),
-        molecule.to_owned()
+        molecule.to_owned(),
     )
 }
 
-#[aoc(day19, part1)]
-pub fn part1((replacements, molecule): &(HashMap<String, Vec<String>>, String)) -> usize {
+fn part_1((replacements, molecule): (HashMap<String, Vec<String>>, String)) -> usize {
     let mut possibilities = HashSet::new();
     for i in 0..molecule.len() {
-        for (from, to) in replacements {
-            if molecule.len() >= i + from.len() && &molecule[i..i+from.len()] == from {
+        for (from, to) in &replacements {
+            if molecule.len() >= i + from.len() && &molecule[i..i + from.len()] == from {
                 for t in to {
                     let mut new = molecule.clone();
-                    new.replace_range(i..i+from.len(), t);
+                    new.replace_range(i..i + from.len(), t);
                     possibilities.insert(new);
                 }
             }
@@ -34,12 +33,11 @@ pub fn part1((replacements, molecule): &(HashMap<String, Vec<String>>, String)) 
     possibilities.len()
 }
 
-#[aoc(day19, part2)]
-pub fn part2((replacements, molecule): &(HashMap<String, Vec<String>>, String)) -> usize {
-    let mut replacements = replacements.iter()
-        .flat_map(|(from, to)|
-            to.iter().map(move |t| (t.clone(), from.clone()))
-        ).collect_vec();
+fn part_2((replacements, molecule): (HashMap<String, Vec<String>>, String)) -> usize {
+    let mut replacements = replacements
+        .iter()
+        .flat_map(|(from, to)| to.iter().map(move |t| (t.clone(), from.clone())))
+        .collect_vec();
 
     fn try_solve(mut molecule: String, replacements: &Vec<(String, String)>) -> Option<usize> {
         let mut n = 0;
@@ -63,5 +61,6 @@ pub fn part2((replacements, molecule): &(HashMap<String, Vec<String>>, String)) 
             try_solve(molecule.clone(), &replacements)
         })
         .take(100)
-        .min().unwrap()
+        .min()
+        .unwrap()
 }
