@@ -25,9 +25,12 @@ fn part_2(input: Vec<(i32, i32)>) -> usize {
 }
 
 fn trace(input: impl Iterator<Item = (i32, i32)>) -> impl Iterator<Item = (i32, i32)> {
-    input.scan((0, 0), |(h, v), (mh, mv)| {
-        *h += mh;
-        *v += mv;
-        Some((*h, *v))
-    })
+    chain(
+        once((0, 0)),
+        input.scan((0, 0), |(h, v), (mh, mv)| {
+            *h += mh;
+            *v += mv;
+            Some((*h, *v))
+        }),
+    )
 }
