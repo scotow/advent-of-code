@@ -1,10 +1,11 @@
 use bitvec::field::BitField;
-use bitvec::mem::BitMemory;
+use bitvec::macros::internal::funty::Integral;
+// use bitvec::mem::BitMemory;
 use bitvec::prelude::{BitSlice, BitVec, Msb0};
 
 advent_of_code_2021::main!();
 
-fn generator(input: &str) -> BitVec<Msb0, u8> {
+fn generator(input: &str) -> BitVec<u8, Msb0> {
     BitVec::from_vec(
         (0..input.len())
             .step_by(2)
@@ -13,15 +14,15 @@ fn generator(input: &str) -> BitVec<Msb0, u8> {
     )
 }
 
-fn part_1(input: BitVec<Msb0, u8>) -> u16 {
+fn part_1(input: BitVec<u8, Msb0>) -> u16 {
     parse(input.as_bitslice(), &mut 0).0
 }
 
-fn part_2(input: BitVec<Msb0, u8>) -> u64 {
+fn part_2(input: BitVec<u8, Msb0>) -> u64 {
     parse(input.as_bitslice(), &mut 0).1
 }
 
-fn parse(input: &BitSlice<Msb0, u8>, ptr: &mut usize) -> (u16, u64) {
+fn parse(input: &BitSlice<u8, Msb0>, ptr: &mut usize) -> (u16, u64) {
     let mut version = read(input, ptr, 3);
     let n = match read::<u8>(input, ptr, 3) {
         4 => {
@@ -67,7 +68,7 @@ fn parse(input: &BitSlice<Msb0, u8>, ptr: &mut usize) -> (u16, u64) {
     (version, n)
 }
 
-fn read<N: BitMemory>(input: &BitSlice<Msb0, u8>, ptr: &mut usize, size: usize) -> N {
+fn read<N: Integral>(input: &BitSlice<u8, Msb0>, ptr: &mut usize, size: usize) -> N {
     *ptr += size;
     input[*ptr - size..*ptr].load_be()
 }

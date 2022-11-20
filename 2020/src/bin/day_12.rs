@@ -96,7 +96,7 @@ impl Move {
     fn to_degree(self) -> u16 {
         match self.action {
             Action::Left => self.value,
-            Action::Right => (360 - self.value % 360),
+            Action::Right => 360 - self.value % 360,
             _ => unreachable!(),
         }
     }
