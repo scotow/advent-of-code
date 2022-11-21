@@ -39,7 +39,7 @@ fn filter_calories<'a>(
     iter.filter(move |v| score(&ingredients, &v, "calories") == 500)
 }
 
-fn resolve<'a>(ingredients: &'a [Ingredient], iter: impl Iterator<Item = Vec<usize>> + 'a) -> i64 {
+fn resolve(ingredients: &[Ingredient], iter: impl Iterator<Item = Vec<usize>>) -> i64 {
     iter.map(|v| {
         ["capacity", "durability", "flavor", "texture"]
             .iter()
