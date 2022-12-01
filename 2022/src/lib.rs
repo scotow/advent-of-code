@@ -7,6 +7,7 @@ macro_rules! main {
             std::cmp::Ordering,
             std::collections::{HashMap, HashSet, VecDeque},
             std::fmt::{Debug, Display, Formatter},
+            std::iter::zip,
             std::iter::{once, successors},
             std::ops::{Add, Sub},
             std::ops::{Range, RangeInclusive},
