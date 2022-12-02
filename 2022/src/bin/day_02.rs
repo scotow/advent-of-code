@@ -12,12 +12,7 @@ fn part_1(input: Vec<(u8, u8)>) -> u32 {
 }
 
 fn part_2(mut input: Vec<(u8, u8)>) -> u32 {
-    run(input, |h, r| match r {
-        0 => (h + 2) % 3,
-        1 => h,
-        2 => (h + 1) % 3,
-        _ => unreachable!(),
-    })
+    run(input, |h, r| (h + r + 2) % 3)
 }
 
 fn run(plays: Vec<(u8, u8)>, mut alt: impl FnMut(u8, u8) -> u8) -> u32 {
