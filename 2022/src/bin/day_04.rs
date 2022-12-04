@@ -17,7 +17,7 @@ fn part_1(input: Vec<(u8, u8, u8, u8)>) -> usize {
 }
 
 fn part_2(input: Vec<(u8, u8, u8, u8)>) -> usize {
-    count(input, |&(a, b, x, y)| a <= x && b >= x || x <= a && y >= a)
+    count(input, |&(a, b, x, y)| a <= y && x <= b)
 }
 
 fn count(input: Vec<(u8, u8, u8, u8)>, f: impl FnMut(&(u8, u8, u8, u8)) -> bool) -> usize {
