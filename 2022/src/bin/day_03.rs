@@ -22,7 +22,7 @@ fn common(badges: impl IntoIterator<Item = impl AsRef<[u8]>>) -> u32 {
         .reduce(|b1, b2| b1.intersection(&b2).copied().collect::<HashSet<_>>())
         .unwrap()
         .into_iter()
-        .next()
+        .exactly_one()
         .map(|n| n.checked_sub(b'a').unwrap_or_else(|| n - b'A' + 26))
         .unwrap() as u32
 }
