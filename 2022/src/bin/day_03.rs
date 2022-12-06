@@ -1,17 +1,17 @@
 advent_of_code_2022::main!();
 
-fn generator(input: &'static str) -> Vec<&'static [u8]> {
+fn generator(input: &str) -> Vec<&[u8]> {
     input.lines().map(|l| l.as_bytes()).collect()
 }
 
-fn part_1(input: Vec<&'static [u8]>) -> u32 {
+fn part_1(input: Vec<&[u8]>) -> u32 {
     input
         .into_iter()
         .map(|b| common(b.chunks_exact(b.len() / 2)))
         .sum()
 }
 
-fn part_2(input: Vec<&'static [u8]>) -> u32 {
+fn part_2(input: Vec<&[u8]>) -> u32 {
     input.chunks_exact(3).map(common).sum()
 }
 
