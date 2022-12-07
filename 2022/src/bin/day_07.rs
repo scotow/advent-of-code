@@ -7,7 +7,7 @@ struct Dir<'a> {
 }
 
 impl<'a> Dir<'a> {
-    fn get_dir(&mut self, path: &[&'a str]) -> &mut Dir<'a> {
+    fn get_dir(&mut self, path: &[&str]) -> &mut Dir<'a> {
         if path.is_empty() {
             self
         } else {
