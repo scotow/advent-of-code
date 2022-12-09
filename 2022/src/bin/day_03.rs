@@ -23,6 +23,6 @@ fn common(badges: impl IntoIterator<Item = impl AsRef<[u8]>>) -> u32 {
         .unwrap()
         .into_iter()
         .exactly_one()
-        .map(|n| n.checked_sub(b'a').unwrap_or_else(|| n - b'A' + 26))
+        .map(|n| n.checked_sub(b'a').unwrap_or(n - b'A' + 26))
         .unwrap() as u32
 }

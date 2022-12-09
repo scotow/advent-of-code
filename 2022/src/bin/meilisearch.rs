@@ -81,7 +81,7 @@ fn part_2(mut paths: HashMap<&'static str, Vec<Vec<bool>>>) -> usize {
 
 fn closest<'a>(paths: &HashMap<&'a str, Vec<Vec<bool>>>) -> (&'a str, usize) {
     paths
-        .into_iter()
+        .iter()
         .sorted_by(|(_, p1), (_, p2)| p1.len().cmp(&p2.len()).then_with(|| p1.cmp(p2)))
         .next()
         .map(|(&n, p)| (n, p.len()))

@@ -15,6 +15,6 @@ fn part_2(input: &[u8]) -> usize {
 fn solve(input: &[u8], len: usize) -> usize {
     len + input
         .windows(len)
-        .position(|w| w.into_iter().all_unique())
+        .position(|w| w.iter().all_unique())
         .unwrap()
 }
