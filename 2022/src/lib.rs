@@ -10,7 +10,8 @@ macro_rules! main {
             std::fmt::{Debug, Display, Formatter},
             std::iter::zip,
             std::iter::{once, successors},
-            std::ops::{Add, Sub},
+            std::mem::take,
+            std::ops::{Add, Mul, Sub},
             std::ops::{Range, RangeInclusive},
             std::str::FromStr,
         };
