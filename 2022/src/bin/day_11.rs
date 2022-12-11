@@ -24,11 +24,9 @@ impl FromStr for Monkey {
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         let mut lines = input.lines().skip(1);
         Ok(Monkey {
-            items: lines
-                .next()
-                .unwrap()
-                .split([',', ' '])
-                .filter_map(|p| p.parse().ok())
+            items: lines.next().unwrap()[18..]
+                .split(", ")
+                .map(|n| n.parse().unwrap())
                 .collect(),
             op: {
                 let mut op = lines.next().unwrap().split_whitespace().skip(4);
@@ -41,14 +39,7 @@ impl FromStr for Monkey {
                     op.next().unwrap().parse().ok(),
                 )
             },
-            test: lines
-                .next()
-                .unwrap()
-                .split_whitespace()
-                .rev()
-                .next()
-                .and_then(|n| n.parse().ok())
-                .unwrap(),
+            test: lines.next().unwrap()[21..].parse().unwrap(),
             throw: lines
                 .map(|l| l.split_whitespace().rev().next().unwrap().parse().unwrap())
                 .collect_vec()
@@ -87,9 +78,7 @@ fn solve(mut monkeys: Vec<Monkey>, rounds: usize, reduction: u64) -> usize {
     }
     monkeys
         .into_iter()
-        .map(|m| m.inspected)
-        .sorted()
-        .rev()
-        .take(2)
-        .product()
+        .map(|m| -(m.inspected as isize))
+        .k_smallest(2)
+        .product::<isize>() as usize
 }
