@@ -45,5 +45,5 @@ fn shortest(map: &Vec<Vec<u8>>, end: Pos<usize>, f: impl FnMut(&Pos<usize>) -> b
     )
     .unwrap()
     .len()
-        - 1
+    .sub(1)
 }

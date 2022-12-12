@@ -12,12 +12,10 @@ macro_rules! main {
             std::cmp::Ordering,
             std::collections::{HashMap, HashSet, VecDeque},
             std::fmt::{Debug, Display, Formatter},
-            std::iter::zip,
-            std::iter::{once, successors},
+            std::iter::{once, successors, zip, Peekable},
             std::mem::take,
-            std::ops::{Add, Mul, Sub},
-            std::ops::{Range, RangeInclusive},
-            std::str::FromStr,
+            std::ops::{Add, Mul, Range, RangeInclusive, Sub},
+            std::str::{from_utf8, FromStr},
         };
 
         fn main() {
