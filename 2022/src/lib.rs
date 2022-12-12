@@ -3,8 +3,12 @@ macro_rules! main {
     () => {
         #[allow(unused_import)]
         use {
-            advent_of_code_2022::{deltas4, deltas8, neighbors4, neighbors8},
+            advent_of_code_2022::{deltas4, deltas8, neighbors4, neighbors8, Pos},
             itertools::{chain, iproduct, repeat_n, FoldWhile, Itertools},
+            pathfinding::directed::{
+                bfs::bfs,
+                dijkstra::{dijkstra, dijkstra_all},
+            },
             std::cmp::Ordering,
             std::collections::{HashMap, HashSet, VecDeque},
             std::fmt::{Debug, Display, Formatter},
@@ -27,8 +31,11 @@ macro_rules! main {
 
 use itertools::iproduct;
 use num::iter::range_inclusive;
+use num::traits::{WrappingAdd, WrappingSub};
 use num::{One, ToPrimitive, Zero};
 use std::ops::{Add, Neg, Sub};
+
+pub type Pos<T> = (T, T);
 
 pub fn deltas4<N>() -> impl Iterator<Item = (N, N)>
 where
@@ -36,10 +43,10 @@ where
         + Sub<N, Output = N>
         + Neg<Output = N>
         + PartialOrd<N>
-        + One
         + Zero
-        + Copy
+        + One
         + ToPrimitive
+        + Copy
         + 'static,
 {
     deltas8::<N>().filter(|&(x, y)| x.is_zero() || y.is_zero())
@@ -51,10 +58,10 @@ where
         + Sub<N, Output = N>
         + Neg<Output = N>
         + PartialOrd<N>
-        + One
         + Zero
-        + Copy
+        + One
         + ToPrimitive
+        + Copy
         + 'static,
 {
     iproduct!(
@@ -66,30 +73,18 @@ where
 
 pub fn neighbors4<N>(x: N, y: N) -> impl Iterator<Item = (N, N)>
 where
-    N: Add<N, Output = N>
-        + Sub<N, Output = N>
-        + Neg<Output = N>
-        + PartialOrd<N>
-        + One
-        + Zero
-        + Copy
-        + ToPrimitive
-        + 'static,
+    N: WrappingAdd + WrappingSub + PartialOrd<N> + Zero + One + ToPrimitive + Copy + 'static,
 {
-    deltas4::<N>().map(move |(dx, dy)| (dx + x, dy + y))
+    neighbors8(x, y).filter(move |&(xn, yn)| x == xn || y == yn)
 }
 
 pub fn neighbors8<N>(x: N, y: N) -> impl Iterator<Item = (N, N)>
 where
-    N: Add<N, Output = N>
-        + Sub<N, Output = N>
-        + Neg<Output = N>
-        + PartialOrd<N>
-        + One
-        + Zero
-        + Copy
-        + ToPrimitive
-        + 'static,
+    N: WrappingAdd + WrappingSub + PartialOrd<N> + Zero + One + ToPrimitive + Copy + 'static,
 {
-    deltas8::<N>().map(move |(dx, dy)| (dx + x, dy + y))
+    iproduct!(
+        [x.wrapping_sub(&N::one()), x, x.wrapping_add(&N::one())],
+        [y.wrapping_sub(&N::one()), y, y.wrapping_add(&N::one())]
+    ) // ↖ ← ↙ ↑ ↓ ↗ → ↘
+    .filter(move |&xyn| xyn != (x, y))
 }
