@@ -6,7 +6,7 @@ macro_rules! main {
             advent_of_code_2022::{deltas4, deltas8, neighbors4, neighbors8, Pos},
             itertools::{chain, iproduct, repeat_n, FoldWhile, Itertools},
             pathfinding::directed::{
-                bfs::bfs,
+                bfs::{bfs, bfs_reach},
                 dijkstra::{dijkstra, dijkstra_all},
             },
             std::cmp::Ordering,

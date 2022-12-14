@@ -19,36 +19,36 @@ fn generator(input: &str) -> HashSet<Pos<i16>> {
         .collect()
 }
 
-fn part_1(cave: HashSet<Pos<i16>>) -> usize {
-    solve(cave, false)
-}
-
-fn part_2(cave: HashSet<Pos<i16>>) -> usize {
-    solve(cave, true)
-}
-
-fn solve(mut cave: HashSet<Pos<i16>>, floor: bool) -> usize {
-    let bottom = cave.iter().max_by_key(|(_, y)| y).unwrap().1 + 2;
+fn part_1(mut cave: HashSet<Pos<i16>>) -> usize {
+    let bottom = cave.iter().max_by_key(|(_, y)| y).unwrap().1;
     let start = cave.len();
     loop {
         let (mut gx, mut gy) = (500, 0);
         loop {
-            if !floor && gy == bottom {
+            if gy == bottom {
                 return cave.len() - start;
             }
             if let Some(dx) = [0, -1, 1]
                 .into_iter()
-                .find(|dx| (floor && gy + 1 == bottom) ^ !cave.contains(&(gx + dx, gy + 1)))
+                .find(|dx| !cave.contains(&(gx + dx, gy + 1)))
             {
                 gy += 1;
-                gx = gx + dx;
+                gx += dx;
             } else {
                 break;
             }
         }
         cave.insert((gx, gy));
-        if (gx, gy) == (500, 0) {
-            return cave.len() - start;
-        }
     }
+}
+
+fn part_2(cave: HashSet<Pos<i16>>) -> usize {
+    let cave = &cave;
+    let bottom = cave.iter().max_by_key(|(_, y)| y).unwrap().1 + 2;
+    bfs_reach((500, 0), |&(x, y)| {
+        [0, -1, 1].into_iter().filter_map(move |dx| {
+            (y + 1 < bottom && !cave.contains(&(x + dx, y + 1))).then_some((x + dx, y + 1))
+        })
+    })
+    .count()
 }
