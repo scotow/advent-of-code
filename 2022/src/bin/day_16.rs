@@ -31,6 +31,7 @@ fn part_2(valves: Valves) -> u32 {
         .iter()
         .copied()
         .powerset()
+        .filter(|s| (worthy_valves.len() / 4..=div_ceil(worthy_valves.len(), 2)).contains(&s.len()))
         .map(|set| {
             let human = set.iter().copied().collect();
             let elephant = worthy_valves.difference(&human).copied().collect();
