@@ -25,15 +25,14 @@ fn part_1(mut cave: HashSet<Pos<i16>>) -> usize {
     loop {
         let (mut gx, mut gy) = (500, 0);
         loop {
-            if gy == bottom {
-                return cave.len() - start;
-            }
             if let Some(dx) = [0, -1, 1]
                 .into_iter()
                 .find(|dx| !cave.contains(&(gx + dx, gy + 1)))
             {
-                gy += 1;
-                gx += dx;
+                (gx, gy) = (gx + dx, gy + 1);
+                if gy == bottom {
+                    return cave.len() - start;
+                }
             } else {
                 break;
             }
