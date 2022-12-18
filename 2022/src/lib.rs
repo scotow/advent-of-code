@@ -46,8 +46,7 @@ where
         + Zero
         + One
         + ToPrimitive
-        + Copy
-        + 'static,
+        + Copy,
 {
     deltas8::<N>().filter(|&(x, y)| x.is_zero() || y.is_zero())
 }
@@ -61,8 +60,7 @@ where
         + Zero
         + One
         + ToPrimitive
-        + Copy
-        + 'static,
+        + Copy,
 {
     iproduct!(
         range_inclusive(N::one().neg(), N::one()),
@@ -73,14 +71,14 @@ where
 
 pub fn neighbors4<N>(x: N, y: N) -> impl Iterator<Item = (N, N)>
 where
-    N: WrappingAdd + WrappingSub + PartialOrd<N> + Zero + One + ToPrimitive + Copy + 'static,
+    N: WrappingAdd + WrappingSub + PartialOrd<N> + One + ToPrimitive + Copy,
 {
     neighbors8(x, y).filter(move |&(xn, yn)| x == xn || y == yn)
 }
 
 pub fn neighbors8<N>(x: N, y: N) -> impl Iterator<Item = (N, N)>
 where
-    N: WrappingAdd + WrappingSub + PartialOrd<N> + Zero + One + ToPrimitive + Copy + 'static,
+    N: WrappingAdd + WrappingSub + PartialOrd<N> + One + ToPrimitive + Copy,
 {
     iproduct!(
         [x.wrapping_sub(&N::one()), x, x.wrapping_add(&N::one())],
@@ -91,7 +89,7 @@ where
 
 pub fn neighbors6<N>(x: N, y: N, z: N) -> impl Iterator<Item = (N, N, N)>
 where
-    N: WrappingAdd + WrappingSub + PartialOrd<N> + Zero + One + ToPrimitive + Copy + 'static,
+    N: WrappingAdd + WrappingSub + One + Copy,
 {
     [
         (x.wrapping_sub(&N::one()), y, z),
