@@ -3,7 +3,7 @@ macro_rules! main {
     () => {
         #[allow(unused_import)]
         use {
-            advent_of_code_2022::{deltas4, deltas8, neighbors4, neighbors8, Pos},
+            advent_of_code_2022::{deltas4, deltas8, neighbors4, neighbors6, neighbors8, Pos},
             itertools::{chain, iproduct, repeat_n, FoldWhile, Itertools},
             num::integer::div_ceil,
             pathfinding::directed::{
@@ -87,4 +87,19 @@ where
         [y.wrapping_sub(&N::one()), y, y.wrapping_add(&N::one())]
     ) // ↖ ← ↙ ↑ ↓ ↗ → ↘
     .filter(move |&xyn| xyn != (x, y))
+}
+
+pub fn neighbors6<N>(x: N, y: N, z: N) -> impl Iterator<Item = (N, N, N)>
+where
+    N: WrappingAdd + WrappingSub + PartialOrd<N> + Zero + One + ToPrimitive + Copy + 'static,
+{
+    [
+        (x.wrapping_sub(&N::one()), y, z),
+        (x.wrapping_add(&N::one()), y, z),
+        (x, y.wrapping_sub(&N::one()), z),
+        (x, y.wrapping_add(&N::one()), z),
+        (x, y, z.wrapping_sub(&N::one())),
+        (x, y, z.wrapping_add(&N::one())),
+    ]
+    .into_iter()
 }
