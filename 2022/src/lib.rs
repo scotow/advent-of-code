@@ -3,7 +3,7 @@ macro_rules! main {
     () => {
         #[allow(unused_import)]
         use {
-            advent_of_code_2022::{deltas4, deltas8, neighbors4, neighbors6, neighbors8, Pos},
+            advent_of_code_2022::{deltas4, deltas8, max, neighbors4, neighbors6, neighbors8, Pos},
             itertools::{chain, iproduct, repeat_n, FoldWhile, Itertools},
             num::integer::div_ceil,
             pathfinding::directed::{
@@ -100,4 +100,11 @@ where
         (x, y, z.wrapping_add(&N::one())),
     ]
     .into_iter()
+}
+
+#[macro_export]
+macro_rules! max {
+    ( $a:expr, $( $b:expr ),* ) => {
+        $a$(.max($b))*
+    };
 }

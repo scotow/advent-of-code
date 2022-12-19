@@ -40,7 +40,8 @@ impl Collection {
         } else {
             let mut outs = Vec::with_capacity(3);
             if self.ore >= bp.obsidian.0
-                && self.clay >= bp.obsidian.1 && robots.obsidian < bp.geode.1
+                && self.clay >= bp.obsidian.1
+                && robots.obsidian < bp.geode.1
             {
                 let (mut new_inv, mut built) = (*self, Collection::default());
                 new_inv.ore -= bp.obsidian.0;
@@ -54,11 +55,7 @@ impl Collection {
                 built.clay = 1;
                 outs.push((new_inv, built))
             }
-            if self.ore >= bp.ore && robots.ore
-                < [bp.ore, bp.clay, bp.obsidian.0, bp.geode.0]
-                .into_iter()
-                .max()
-                .unwrap() {
+            if self.ore >= bp.ore && robots.ore < max!(bp.ore, bp.clay, bp.obsidian.0, bp.geode.0) {
                 let (mut new_inv, mut built) = (*self, Collection::default());
                 new_inv.ore -= bp.ore;
                 built.ore = 1;
@@ -90,43 +87,43 @@ fn generator(input: &str) -> Vec<Blueprint> {
 fn part_1(blueprints: Vec<Blueprint>) -> u16 {
     blueprints
         .into_iter()
-        .map(solve::<24>)
         .enumerate()
-        .map(|(i, r)| (i + 1) as u16 * r)
+        .map(|(i, bp)| (i + 1) as u16 * solve::<24>(bp))
         .sum()
 }
 
 fn part_2(blueprints: Vec<Blueprint>) -> u16 {
-    blueprints
-        .into_iter()
-        .take(3)
-        .map(solve::<32>)
-        .product()
+    blueprints.into_iter().take(3).map(solve::<32>).product()
 }
 
-fn solve<const M: u8>(blueprint: Blueprint) -> u16 {
+fn solve<const MIN: u8>(blueprint: Blueprint) -> u16 {
     let mut seen = HashSet::new();
     let mut queue = HashSet::new();
-    queue.insert((Collection::default(), Collection {
-        ore: 1,
-        ..Default::default()
-    }));
+    queue.insert((
+        Collection::default(),
+        Collection {
+            ore: 1,
+            ..Default::default()
+        },
+    ));
 
     let mut min = 0;
     loop {
         let mut next_queue = HashSet::with_capacity(queue.len() * 2);
         for (inv, robots) in queue {
-            for (mut new_inv, built) in inv.craft(&robots, &blueprint) {
-                new_inv = new_inv + robots;
-                let new_robots = robots + built;
-                if seen.insert((new_inv, new_robots)) {
-                    next_queue.insert((new_inv, new_robots));
+            for (new_inv, built) in inv.craft(&robots, &blueprint) {
+                if seen.insert((new_inv + robots, robots + built)) {
+                    next_queue.insert((new_inv + robots, robots + built));
                 }
             }
         }
         min += 1;
-        if min == M {
-            return next_queue.into_iter().map(|(inv, _)| inv.geode).max().unwrap();
+        if min == MIN {
+            return next_queue
+                .into_iter()
+                .map(|(inv, _)| inv.geode)
+                .max()
+                .unwrap();
         }
         let max_geode = next_queue.iter().map(|(inv, _)| inv.geode).max().unwrap();
         next_queue.retain(|(inv, _)| inv.geode == max_geode);
