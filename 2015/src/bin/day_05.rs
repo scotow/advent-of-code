@@ -19,7 +19,7 @@ fn is_nice_string_1(input: &str) -> bool {
         .count()
         >= 3
         && input.chars().tuple_windows().any(|(a, b)| a == b)
-        && ["ab", "cb", "pq", "xy"].iter().all(|&s| !input.contains(s))
+        && ["ab", "cd", "pq", "xy"].iter().all(|&s| !input.contains(s))
 }
 
 fn is_nice_string_2(input: &str) -> bool {
