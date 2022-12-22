@@ -5,7 +5,7 @@ macro_rules! main {
         use {
             advent_of_code_2022::{deltas4, deltas8, max, neighbors4, neighbors6, neighbors8, Pos},
             itertools::{chain, iproduct, repeat_n, Either, FoldWhile, Itertools},
-            num::integer::div_ceil,
+            num::integer::{div_ceil, Integer},
             pathfinding::directed::{
                 bfs::{bfs, bfs_reach},
                 dijkstra::{dijkstra, dijkstra_all},
