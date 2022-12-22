@@ -56,7 +56,7 @@ fn part_2(mut tree: Tree) -> i64 {
             }
         } else {
             if ops == i64::div {
-                tree.insert(to_resolve, Either::Right((b, a, i64::mul)));
+                tree.insert(to_resolve, Either::Right((a, b, i64::mul)));
                 target = resolve(&tree, a);
             } else if ops == i64::mul {
                 target /= resolve(&tree, a);
