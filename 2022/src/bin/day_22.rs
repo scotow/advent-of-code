@@ -2,8 +2,8 @@ advent_of_code_2022::main!();
 
 const UP: Pos<isize> = (0, -1);
 const RIGHT: Pos<isize> = (1, 0);
-const LEFT: Pos<isize> = (-1, 0);
 const DOWN: Pos<isize> = (0, 1);
+const LEFT: Pos<isize> = (-1, 0);
 
 #[derive(Clone, Debug)]
 struct Grid {
@@ -149,5 +149,5 @@ fn solve(
             }
         }
     }
-    (y + 1) * 1_000 + (x + 1) * 4 + ((dx + dy) == -1) as isize * 2 + (dy.abs() == 1) as isize
+    (y + 1) * 1_000 + (x + 1) * 4 + (dx + dy - 1).abs() + dy.abs()
 }
