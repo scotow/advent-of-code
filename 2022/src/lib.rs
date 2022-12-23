@@ -15,7 +15,7 @@ macro_rules! main {
             std::fmt::{Debug, Display, Formatter},
             std::hash::{Hash, Hasher},
             std::iter::{once, successors, zip, Peekable},
-            std::mem::take,
+            std::mem::{replace, take},
             std::ops::{Add, Div, Mul, Range, RangeInclusive, Sub},
             std::str::{from_utf8, FromStr},
         };
