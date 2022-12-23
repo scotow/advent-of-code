@@ -11,7 +11,7 @@ impl Iterator for Grid {
 
     fn next(&mut self) -> Option<Self::Item> {
         let mut next = HashSet::with_capacity(self.cells.len());
-        let mut proposal = HashMap::<_, Vec<_>>::new();
+        let mut proposals = HashMap::with_capacity(self.cells.len());
         'elf: for &(x, y) in &self.cells {
             if neighbors8(x, y).all(|nxy| !self.cells.contains(&nxy)) {
                 next.insert((x, y));
@@ -27,20 +27,18 @@ impl Iterator for Grid {
                 .into_iter()
                 .all(|(dx, dy)| !self.cells.contains(&(x + dx, y + dy)))
                 {
-                    proposal.entry((x + dx, y + dy)).or_default().push((x, y));
+                    if let Some(prev) = proposals.insert((x + dx, y + dy), (x, y)) {
+                        next.remove(&(x + dx, y + dy));
+                        next.extend([prev, (x, y)]);
+                    } else {
+                        next.insert((x + dx, y + dy));
+                    }
                     continue 'elf;
                 }
             }
             next.insert((x, y));
         }
 
-        for ((tx, ty), requesters) in proposal {
-            if requesters.len() == 1 {
-                next.insert((tx, ty));
-            } else {
-                next.extend(requesters);
-            }
-        }
         self.dir_queue.rotate_left(1);
         Some(replace(&mut self.cells, next))
     }
