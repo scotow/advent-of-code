@@ -39,16 +39,15 @@ pub type Pos<T> = (T, T);
 
 pub fn deltas4<N>() -> impl Iterator<Item = (N, N)>
 where
-    N: Add<N, Output = N>
-        + Sub<N, Output = N>
-        + Neg<Output = N>
-        + PartialOrd<N>
-        + Zero
-        + One
-        + ToPrimitive
-        + Copy,
+    N: Neg<Output = N> + Zero + One,
 {
-    deltas8::<N>().filter(|&(x, y)| x.is_zero() || y.is_zero())
+    [
+        (N::zero(), N::one().neg()),
+        (N::one(), N::zero()),
+        (N::zero(), N::one()),
+        (N::one().neg(), N::zero()),
+    ]
+    .into_iter()
 }
 
 pub fn deltas8<N>() -> impl Iterator<Item = (N, N)>
