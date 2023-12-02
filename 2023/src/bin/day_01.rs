@@ -1,47 +1,31 @@
 advent_of_code_2023::main!();
 
-fn generator(input: &str) -> Vec<Vec<u8>> {
-    input.lines().map(|l| l.bytes().collect()).collect()
+fn generator(input: &str) -> Vec<&[u8]> {
+    input.lines().map(|l| l.as_bytes()).collect()
 }
 
-fn part_1(input: Vec<Vec<u8>>) -> u32 {
-    input
-        .into_iter()
-        .map(|mut l| (find(&mut l, false, true) + find(&mut l, false, false)) as u32)
-        .sum()
+fn part_1(input: Vec<&[u8]>) -> u32 {
+    input.into_iter().map(|l| find(l, false) as u32).sum()
 }
 
-fn part_2(input: Vec<Vec<u8>>) -> u32 {
-    input
-        .into_iter()
-        .map(|mut l| (find(&mut l, true, true) + find(&mut l, true, false)) as u32)
-        .sum()
+fn part_2(input: Vec<&[u8]>) -> u32 {
+    input.into_iter().map(|l| find(l, true) as u32).sum()
 }
 
-fn find(input: &mut Vec<u8>, replace: bool, dir: bool) -> u8 {
-    if !dir {
-        input.reverse();
-    }
-    for i in 0..input.len() {
+fn find(input: &[u8], replace: bool) -> u8 {
+    let iter = (0..input.len()).filter_map(|i| {
         if input[i].is_ascii_digit() {
-            return (input[i] - b'0') * (1 + dir as u8 * 9);
-        }
-        if replace {
-            for (j, n) in [
+            Some(input[i] - b'0')
+        } else if replace {
+            [
                 "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
             ]
             .into_iter()
-            .map(|s| {
-                dir.then(|| s.as_bytes().to_owned())
-                    .unwrap_or_else(|| s.bytes().rev().collect())
-            })
             .enumerate()
-            {
-                if input[i..].starts_with(&n) {
-                    return (j + 1) as u8 * (1 + dir as u8 * 9);
-                }
-            }
+            .find_map(|(j, n)| input[i..].starts_with(n.as_bytes()).then_some(j as u8 + 1))
+        } else {
+            None
         }
-    }
-    unreachable!()
+    });
+    iter.clone().next().unwrap() * 10 + iter.rev().next().unwrap()
 }
