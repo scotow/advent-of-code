@@ -7,12 +7,10 @@ fn generator(input: &str) -> Vec<HashMap<&str, u32>> {
             g.split_once(": ")
                 .unwrap()
                 .1
-                .split("; ")
-                .flat_map(|d| {
-                    d.split(", ").map(|c| {
-                        let (n, c) = c.split_once(' ').unwrap();
-                        (c, n.parse().unwrap())
-                    })
+                .split([';', ','])
+                .map(|d| {
+                    let (n, c) = d.trim().split_once(' ').unwrap();
+                    (c, n.parse().unwrap())
                 })
                 .sorted_by_key(|(_c, n)| *n)
                 .collect()
