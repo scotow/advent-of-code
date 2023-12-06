@@ -17,6 +17,7 @@ macro_rules! main {
             std::iter::{once, successors, zip, Peekable},
             std::mem::{replace, take},
             std::ops::{Add, Div, Mul, Range, RangeInclusive, Sub},
+            std::rc::Rc,
             std::str::{from_utf8, FromStr},
         };
 

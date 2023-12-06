@@ -2,11 +2,11 @@ advent_of_code_2023::main!();
 
 #[derive(Clone, Debug)]
 enum Cell {
-    Number(usize, Range<usize>, u32),
-    Sign(Pos<usize>, u8),
+    Number(Rc<u32>),
+    Sign(u8),
 }
 
-fn generator(input: &str) -> Vec<Cell> {
+fn generator(input: &str) -> HashMap<Pos<usize>, Cell> {
     input
         .lines()
         .enumerate()
@@ -17,12 +17,13 @@ fn generator(input: &str) -> Vec<Cell> {
                 .into_iter()
                 .flat_map(move |(t, bs)| {
                     if t {
-                        let mut bs = bs.peekable();
-                        let x = bs.peek().unwrap().0;
-                        let n = bs.fold(0, |a, (_, b)| a * 10 + (b - b'0') as u32);
-                        vec![Cell::Number(y, x..x + (n.ilog10() + 1) as usize, n)]
+                        let bs = bs.collect::<Vec<_>>();
+                        let n = Rc::new(bs.iter().fold(0, |a, (_, b)| a * 10 + (b - b'0') as u32));
+                        bs.into_iter()
+                            .map(|(x, _)| ((x, y), Cell::Number(Rc::clone(&n))))
+                            .collect::<Vec<_>>()
                     } else {
-                        bs.filter_map(|(x, b)| (b != b'.').then_some(Cell::Sign((x, y), b)))
+                        bs.filter_map(|(x, b)| (b != b'.').then_some(((x, y), Cell::Sign(b))))
                             .collect()
                     }
                 })
@@ -31,43 +32,34 @@ fn generator(input: &str) -> Vec<Cell> {
         .collect()
 }
 
-fn part_1(input: Vec<Cell>) -> u32 {
-    input
-        .iter()
-        .filter_map(|c| match c {
-            Cell::Number(y, xs, n) => xs
-                .clone()
-                .flat_map(|x| neighbors8(x, *y))
-                .any(|xy| {
-                    input
-                        .iter()
-                        .any(|c| matches!(c, Cell::Sign(xy2, _) if &xy == xy2))
-                })
-                .then_some(*n),
-            Cell::Sign(_, _) => None,
-        })
-        .sum()
+fn part_1(input: HashMap<Pos<usize>, Cell>) -> u32 {
+    process(&input, |c| c.into_iter().sum())
 }
 
-fn part_2(input: Vec<Cell>) -> u32 {
+fn part_2(input: HashMap<Pos<usize>, Cell>) -> u32 {
+    process(&input, |c| {
+        c.into_iter()
+            .collect_tuple()
+            .map(|(a, b)| a * b)
+            .unwrap_or(0)
+    })
+}
+
+fn process<F: Fn(Vec<u32>) -> u32>(input: &HashMap<Pos<usize>, Cell>, f: F) -> u32 {
     input
         .iter()
-        .filter_map(|c| match c {
-            &Cell::Sign(sxy, b'*') => {
-                let (a, b) = input
-                    .iter()
-                    .filter_map(|c| match c {
-                        Cell::Number(y, xs, n) => xs
-                            .clone()
-                            .flat_map(|x| neighbors8(x, *y))
-                            .any(|nxy| nxy == sxy)
-                            .then_some(*n),
-                        Cell::Sign(_, _) => None,
+        .map(|(&(cx, cy), c)| match c {
+            Cell::Sign(_) => f(neighbors8(cx, cy)
+                .filter_map(|nxy| {
+                    input.get(&nxy).and_then(|c2| match c2 {
+                        Cell::Number(n) => Some(n),
+                        Cell::Sign(_) => None,
                     })
-                    .collect_tuple()?;
-                Some(a * b)
-            }
-            _ => None,
+                })
+                .unique_by(|n| Rc::as_ptr(n))
+                .map(|n| **n)
+                .collect()),
+            Cell::Number(_) => 0,
         })
         .sum()
 }
