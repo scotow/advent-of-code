@@ -63,13 +63,7 @@ fn part_2(input: Vec<(Hand, u32)>) -> u32 {
         h = h.map(|c| (c == 11).then_some(1).unwrap_or(c));
         (
             h.into_iter()
-                .map(|c| {
-                    if c == 1 {
-                        (2..=10).chain(12..=14).collect()
-                    } else {
-                        vec![c]
-                    }
-                })
+                .map(|c| if c == 1 { 2..=14 } else { c..=c })
                 .multi_cartesian_product()
                 .map(|h| HandType::from(Hand::try_from(h).unwrap()))
                 .max()
