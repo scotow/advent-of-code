@@ -23,29 +23,24 @@ fn generator(input: &str) -> (Vec<usize>, HashMap<Node, [Node; 2]>) {
 }
 
 fn part_1((steps, map): (Vec<usize>, HashMap<Node, [Node; 2]>)) -> usize {
-    solve([b'A'; 3], |n| n == [b'Z'; 3], &steps, &map)
+    solve([b'A'; 3], &[b'Z'; 3], &steps, &map)
 }
 
 fn part_2((steps, map): (Vec<usize>, HashMap<Node, [Node; 2]>)) -> usize {
     map.keys()
         .filter(|n| n[2] == b'A')
-        .map(|&n| solve(n, |n| n[2] == b'Z', &steps, &map))
+        .map(|&n| solve(n, &[b'Z'], &steps, &map))
         .reduce(|a, n| a.lcm(&n))
         .unwrap()
 }
 
-fn solve<F: Fn(Node) -> bool>(
-    mut node: Node,
-    finish: F,
-    steps: &[usize],
-    map: &HashMap<Node, [Node; 2]>,
-) -> usize {
+fn solve(mut node: Node, end: &[u8], steps: &[usize], map: &HashMap<Node, [Node; 2]>) -> usize {
     1 + steps
         .into_iter()
         .cycle()
         .position(|&s| {
             node = map[&node][s];
-            finish(node)
+            node.ends_with(end)
         })
         .unwrap()
 }
