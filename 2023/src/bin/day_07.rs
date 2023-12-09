@@ -1,35 +1,6 @@
 advent_of_code_2023::main!();
 
-type Hand = [u8; 5];
-
-#[derive(PartialOrd, Ord, PartialEq, Eq, Debug)]
-enum HandType {
-    High,
-    Pair,
-    TwoPairs,
-    Three,
-    Full,
-    Four,
-    Five,
-}
-
-impl From<Hand> for HandType {
-    fn from(hand: Hand) -> Self {
-        let map = hand.into_iter().counts();
-        match map.len() {
-            1 => Self::Five,
-            2 if map.values().any(|&n| n == 4) => Self::Four,
-            2 => Self::Full,
-            3 if map.values().any(|&n| n == 3) => Self::Three,
-            3 => Self::TwoPairs,
-            4 => Self::Pair,
-            5 => Self::High,
-            _ => unreachable!(),
-        }
-    }
-}
-
-fn generator(input: &str) -> Vec<(Hand, u32)> {
+fn generator(input: &str) -> Vec<([u8; 5], u32)> {
     input
         .lines()
         .map(|l| {
@@ -54,18 +25,18 @@ fn generator(input: &str) -> Vec<(Hand, u32)> {
         .collect()
 }
 
-fn part_1(input: Vec<(Hand, u32)>) -> u32 {
-    score(input.iter().map(|h| (HandType::from(h.0), h.0, h.1)))
+fn part_1(input: Vec<([u8; 5], u32)>) -> u32 {
+    score(input.iter().map(|h| (strength(h.0), h.0, h.1)))
 }
 
-fn part_2(input: Vec<(Hand, u32)>) -> u32 {
+fn part_2(input: Vec<([u8; 5], u32)>) -> u32 {
     score(input.into_iter().map(|(mut h, b)| {
-        h = h.map(|c| (c == 11).then_some(1).unwrap_or(c));
+        h = h.map(|c| if c == 11 { 1 } else { c });
         (
             h.into_iter()
                 .map(|c| if c == 1 { 2..=14 } else { c..=c })
                 .multi_cartesian_product()
-                .map(|h| HandType::from(Hand::try_from(h).unwrap()))
+                .map(|h| strength(h.try_into().unwrap()))
                 .max()
                 .unwrap(),
             h,
@@ -74,7 +45,21 @@ fn part_2(input: Vec<(Hand, u32)>) -> u32 {
     }))
 }
 
-fn score<I: Iterator<Item = (HandType, Hand, u32)>>(iter: I) -> u32 {
+fn strength(hand: [u8; 5]) -> u8 {
+    let map = hand.into_iter().counts();
+    match map.len() {
+        1 => 6,
+        2 if map.values().any(|&n| n == 4) => 5,
+        2 => 4,
+        3 if map.values().any(|&n| n == 3) => 3,
+        3 => 2,
+        4 => 1,
+        5 => 0,
+        _ => unreachable!(),
+    }
+}
+
+fn score<I: Iterator<Item = (u8, [u8; 5], u32)>>(iter: I) -> u32 {
     iter.sorted()
         .enumerate()
         .map(|(i, (_, _, b))| (i as u32 + 1) * b)
