@@ -15,19 +15,26 @@ fn generator(input: &str) -> Vec<(u64, u64)> {
     time.zip(dist).collect()
 }
 
-fn part_1(input: Vec<(u64, u64)>) -> usize {
+fn part_1(input: Vec<(u64, u64)>) -> u64 {
     input
         .into_iter()
-        .map(|(time, dist)| (1..time).filter(|t| (time - t) * t > dist).count())
+        .map(|(time, dist)| solve(time, dist))
         .product()
 }
 
-fn part_2(input: Vec<(u64, u64)>) -> usize {
+fn part_2(input: Vec<(u64, u64)>) -> u64 {
     let (time, dist) = input.iter().fold((0, 0), |(t1, d1), (t2, d2)| {
         (
             t1 * 10u64.pow(t2.ilog10() + 1) + *t2,
             d1 * 10u64.pow(d2.ilog10() + 1) + *d2,
         )
     });
-    (1..time).filter(|t| (time - t) * t > dist).count()
+    solve(time, dist)
+}
+
+fn solve(time: u64, dist: u64) -> u64 {
+    let delta = time * time - 4 * dist;
+    let x1 = (time as f64 - (delta as f64).sqrt()) / 2.;
+    let x2 = (time as f64 + (delta as f64).sqrt()) / 2.;
+    (x2.floor() as u64) - (x1.ceil() as u64) + 1 - (x1.fract() == 0.) as u64 * 2
 }
