@@ -8,6 +8,7 @@ macro_rules! main {
             num::integer::{div_ceil, Integer},
             pathfinding::directed::{
                 bfs::{bfs, bfs_reach},
+                dfs::{dfs, dfs_reach},
                 dijkstra::{dijkstra, dijkstra_all},
             },
             std::cmp::Ordering,
