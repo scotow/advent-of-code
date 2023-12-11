@@ -40,12 +40,12 @@ fn solve(input: HashSet<Pos<usize>>, gap: usize) -> usize {
 
     input
         .iter()
-        .combinations(2)
-        .map(|ss| {
+        .tuple_combinations()
+        .map(|(s1, s2)| {
             chain!(
-                (ss[0].0.min(ss[1].0) + 1..=ss[0].0.max(ss[1].0))
+                (s1.0.min(s2.0) + 1..=s1.0.max(s2.0))
                     .map(|x| 1 + empty_x.contains(&x) as usize * (gap - 1)),
-                (ss[0].1.min(ss[1].1) + 1..=ss[0].1.max(ss[1].1))
+                (s1.1.min(s2.1) + 1..=s1.1.max(s2.1))
                     .map(|y| 1 + empty_y.contains(&y) as usize * (gap - 1)),
             )
             .sum::<usize>()
