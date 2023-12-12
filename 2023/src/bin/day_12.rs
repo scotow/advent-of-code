@@ -67,26 +67,21 @@ fn solve<'a>(
             as usize;
     }
 
+    let process_ok = |cache| {
+        if damaged == 0 {
+            solve(&map[1..], pattern, 0, cache)
+        } else if !pattern.is_empty() && damaged == pattern[0] {
+            solve(&map[1..], &pattern[1..], 0, cache)
+        } else {
+            0
+        }
+    };
+    let process_damaged = |cache| solve(&map[1..], pattern, damaged + 1, cache);
+
     let res = match map[0] {
-        Spring::Ok => {
-            if damaged == 0 {
-                solve(&map[1..], pattern, 0, cache)
-            } else if !pattern.is_empty() && damaged == pattern[0] {
-                solve(&map[1..], &pattern[1..], 0, cache)
-            } else {
-                0
-            }
-        }
-        Spring::Damaged => solve(&map[1..], pattern, damaged + 1, cache),
-        Spring::Unknown => {
-            (if damaged == 0 {
-                solve(&map[1..], pattern, 0, cache)
-            } else if !pattern.is_empty() && damaged == pattern[0] {
-                solve(&map[1..], &pattern[1..], 0, cache)
-            } else {
-                0
-            }) + solve(&map[1..], pattern, damaged + 1, cache)
-        }
+        Spring::Ok => process_ok(cache),
+        Spring::Damaged => process_damaged(cache),
+        Spring::Unknown => process_ok(cache) + process_damaged(cache),
     };
     cache.insert((map, pattern, damaged), res);
     res
