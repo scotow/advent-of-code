@@ -39,8 +39,7 @@ fn part_2(input: Vec<(Vec<Spring>, Vec<usize>)>) -> usize {
         .into_iter()
         .map(|(m, p)| {
             solve(
-                &repeat_n(m, 5)
-                    .intersperse(vec![Spring::Unknown])
+                &Itertools::intersperse(&mut repeat_n(m, 5), vec![Spring::Unknown])
                     .flatten()
                     .collect::<Vec<_>>(),
                 &repeat_n(p, 5).flatten().collect::<Vec<_>>(),
@@ -51,13 +50,13 @@ fn part_2(input: Vec<(Vec<Spring>, Vec<usize>)>) -> usize {
         .sum()
 }
 
-fn solve<'a>(
-    map: &'a [Spring],
-    pattern: &'a [usize],
+fn solve(
+    map: &[Spring],
+    pattern: &[usize],
     damaged: usize,
-    cache: &mut HashMap<(&'a [Spring], &'a [usize], usize), usize>,
+    cache: &mut HashMap<(usize, usize, usize), usize>,
 ) -> usize {
-    match cache.get(&(map, pattern, damaged)) {
+    match cache.get(&(map.len(), pattern.len(), damaged)) {
         Some(cached) => return *cached,
         None => (),
     }
@@ -83,6 +82,6 @@ fn solve<'a>(
         Spring::Damaged => process_damaged(cache),
         Spring::Unknown => process_ok(cache) + process_damaged(cache),
     };
-    cache.insert((map, pattern, damaged), res);
+    cache.insert((map.len(), pattern.len(), damaged), res);
     res
 }
