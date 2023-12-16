@@ -20,43 +20,33 @@ fn part_2(input: Vec<&[u8]>) -> usize {
     .unwrap()
 }
 
-fn solve(grid: &[&[u8]], (x, y): Pos<usize>, dir: Pos<isize>) -> usize {
-    let mut visited = vec![vec![Vec::new(); grid[0].len()]; grid.len()];
-    visited[y][x].push(dir);
-    run(&grid, (x, y), dir, &mut visited);
-    visited
-        .into_iter()
-        .flatten()
-        .filter(|v| !v.is_empty())
-        .count()
+fn solve(grid: &[&[u8]], (x, y): Pos<usize>, (dx, dy): Pos<isize>) -> usize {
+    let mut visited = vec![vec![0; grid[0].len()]; grid.len()];
+    visited[y][x] |= ((((dx + 1 >> 1) + 1) & dx * 3) << 2 | ((dy + 1 >> 1) + 1) & dy * 3) as u8;
+    run(&grid, (x, y), (dx, dy), &mut visited);
+    visited.into_iter().flatten().filter(|&v| v != 0).count()
 }
 
-fn run(grid: &[&[u8]], pos: Pos<usize>, dir: Pos<isize>, visited: &mut Vec<Vec<Vec<Pos<isize>>>>) {
-    for next_dir in apply_dir(grid[pos.1][pos.0], dir) {
-        let pos = (
-            pos.0.wrapping_add_signed(next_dir.0),
-            pos.1.wrapping_add_signed(next_dir.1),
-        );
-        if pos.0 >= grid[0].len()
-            || pos.1 >= grid.len()
-            || visited[pos.1][pos.0].contains(&next_dir)
-        {
+fn run(grid: &[&[u8]], pos: Pos<usize>, dir: Pos<isize>, visited: &mut Vec<Vec<u8>>) {
+    for (dx, dy) in match (grid[pos.1][pos.0], dir) {
+        (b'.', dir) => [Some(dir), None],
+        (b'-', (-1 | 1, 0)) => [Some(dir), None],
+        (b'|', (0, -1 | 1)) => [Some(dir), None],
+        (b'-', _) => [Some((-1, 0)), Some((1, 0))],
+        (b'|', _) => [Some((0, -1)), Some((0, 1))],
+        (b'/', _) => [Some((-dir.1, -dir.0)), None],
+        (b'\\', _) => [Some((dir.1, dir.0)), None],
+        _ => unreachable!(),
+    }
+    .into_iter()
+    .flatten()
+    {
+        let pos = (pos.0.wrapping_add_signed(dx), pos.1.wrapping_add_signed(dy));
+        let dir_bit = ((((dx + 1 >> 1) + 1) & dx * 3) << 2 | ((dy + 1 >> 1) + 1) & dy * 3) as u8;
+        if pos.0 >= grid[0].len() || pos.1 >= grid.len() || visited[pos.1][pos.0] & dir_bit != 0 {
             continue;
         }
-        visited[pos.1][pos.0].push(next_dir);
-        run(grid, pos, next_dir, visited);
-    }
-}
-
-fn apply_dir(cell: u8, dir: Pos<isize>) -> Vec<Pos<isize>> {
-    match (cell, dir) {
-        (b'.', dir) => vec![dir],
-        (b'-', (-1 | 1, 0)) => vec![dir],
-        (b'|', (0, -1 | 1)) => vec![dir],
-        (b'-', _) => vec![(-1, 0), (1, 0)],
-        (b'|', _) => vec![(0, -1), (0, 1)],
-        (b'/', _) => vec![(-dir.1, -dir.0)],
-        (b'\\', _) => vec![(dir.1, dir.0)],
-        _ => unreachable!(),
+        visited[pos.1][pos.0] |= dir_bit;
+        run(grid, pos, (dx, dy), visited);
     }
 }
