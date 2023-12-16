@@ -62,7 +62,7 @@ fn part_2(grid: Vec<Vec<(Pos<isize>, Pos<isize>)>>) -> usize {
         .count()
 }
 
-fn path(grid: &Vec<Vec<(Pos<isize>, Pos<isize>)>>) -> Vec<Pos<usize>> {
+fn path(grid: &[Vec<(Pos<isize>, Pos<isize>)>]) -> Vec<Pos<usize>> {
     let (sx, sy) = grid
         .iter()
         .enumerate()

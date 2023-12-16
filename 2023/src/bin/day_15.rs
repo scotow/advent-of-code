@@ -11,11 +11,11 @@ fn part_1(input: impl Iterator<Item = &'static str>) -> usize {
 fn part_2(input: impl Iterator<Item = &'static str>) -> usize {
     let mut boxes = vec![Vec::new(); 256];
     for lens in input {
-        let (b, n) = lens.split_once(&['-', '=']).unwrap();
-        let target = &mut boxes[hash(b) as usize];
+        let (b, n) = lens.split_once(['-', '=']).unwrap();
+        let target = &mut boxes[hash(b)];
         let i = target.iter().position(|&(l, _)| l == b);
         if n.is_empty() {
-            i.and_then(|i| Some(target.remove(i)));
+            i.map(|i| target.remove(i));
         } else {
             let n = n.parse::<usize>().unwrap();
             match i {

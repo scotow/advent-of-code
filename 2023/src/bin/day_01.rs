@@ -13,7 +13,7 @@ fn part_2(input: Vec<&[u8]>) -> u32 {
 }
 
 fn find(input: &[u8], replace: bool) -> u8 {
-    let iter = (0..input.len()).filter_map(|i| {
+    let mut iter = (0..input.len()).filter_map(|i| {
         if input[i].is_ascii_digit() {
             Some(input[i] - b'0')
         } else if replace {
@@ -27,5 +27,5 @@ fn find(input: &[u8], replace: bool) -> u8 {
             None
         }
     });
-    iter.clone().next().unwrap() * 10 + iter.rev().next().unwrap()
+    iter.clone().next().unwrap() * 10 + iter.next_back().unwrap()
 }

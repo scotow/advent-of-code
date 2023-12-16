@@ -50,7 +50,7 @@ fn part_2((seeds, maps): (Vec<u64>, Vec<Vec<(Range<u64>, Range<u64>)>>)) -> u64 
         .map(|(s, l)| s..s + l)
         .collect_vec();
     (0..)
-        .filter_map(|l| {
+        .find(|&l| {
             let rs = maps.iter().rev().fold(l, |curr, ranges| {
                 ranges
                     .iter()
@@ -58,8 +58,7 @@ fn part_2((seeds, maps): (Vec<u64>, Vec<Vec<(Range<u64>, Range<u64>)>>)) -> u64 
                     .map(|(s, d)| s.start + (curr - d.start))
                     .unwrap_or(curr)
             });
-            seeds.iter().any(|s| s.contains(&rs)).then_some(l)
+            seeds.iter().any(|s| s.contains(&rs))
         })
-        .next()
         .unwrap()
 }

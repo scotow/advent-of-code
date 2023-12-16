@@ -36,7 +36,7 @@ fn part_2((steps, map): (Vec<usize>, HashMap<Node, [Node; 2]>)) -> usize {
 
 fn solve(mut node: Node, end: &[u8], steps: &[usize], map: &HashMap<Node, [Node; 2]>) -> usize {
     1 + steps
-        .into_iter()
+        .iter()
         .cycle()
         .position(|&s| {
             node = map[&node][s];

@@ -56,9 +56,8 @@ fn solve(
     damaged: usize,
     cache: &mut HashMap<(usize, usize, usize), usize>,
 ) -> usize {
-    match cache.get(&(map.len(), pattern.len(), damaged)) {
-        Some(cached) => return *cached,
-        None => (),
+    if let Some(cached) = cache.get(&(map.len(), pattern.len(), damaged)) {
+        return *cached;
     }
 
     if map.is_empty() {

@@ -52,7 +52,7 @@ fn part_2(mut input: Vec<Vec<u8>>) -> usize {
 }
 
 fn shake<S: Iterator<Item = (Pos<usize>, Pos<usize>)>>(
-    grid: &mut Vec<Vec<u8>>,
+    grid: &mut [Vec<u8>],
     gi: impl Iterator<Item = Pos<usize>>,
     s: impl Fn(Pos<usize>) -> S,
 ) {
