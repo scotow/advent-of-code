@@ -5,80 +5,35 @@ fn generator(input: &str) -> Vec<Vec<u8>> {
 }
 
 fn part_1(mut input: Vec<Vec<u8>>) -> usize {
-    for (y, x) in iproduct!(0..input.len(), 0..input[0].len()) {
-        if input[y][x] != b'O' {
-            continue;
-        }
-        for (ys, yd) in (0..=y).rev().tuple_windows() {
-            if input[yd][x] != b'.' {
-                break;
-            }
-            input[yd][x] = b'O';
-            input[ys][x] = b'.';
-        }
-    }
+    let (w, h) = (input[0].len(), input.len());
+    shake(
+        &mut input,
+        iproduct!(0..h, 0..w).map(|(y, x)| (x, y)),
+        |(x, y)| (0..=y).rev().map(move |y| (x, y)).tuple_windows(),
+    );
     load(&input)
 }
 
 fn part_2(mut input: Vec<Vec<u8>>) -> usize {
+    let (w, h) = (input[0].len(), input.len());
     let mut cache = HashMap::<usize, Vec<(Vec<Vec<u8>>, usize)>>::new();
     for i in 1.. {
-        // North.
-        for (y, x) in iproduct!(0..input.len(), 0..input[0].len()) {
-            if input[y][x] != b'O' {
-                continue;
-            }
-            for (ys, yd) in (0..=y).rev().tuple_windows() {
-                if input[yd][x] != b'.' {
-                    break;
-                }
-                input[yd][x] = b'O';
-                input[ys][x] = b'.';
-            }
-        }
-
-        // // West.
-        for (x, y) in iproduct!(0..input[0].len(), 0..input.len()) {
-            if input[y][x] != b'O' {
-                continue;
-            }
-            for (xs, xd) in (0..=x).rev().tuple_windows() {
-                if input[y][xd] != b'.' {
-                    break;
-                }
-                input[y][xd] = b'O';
-                input[y][xs] = b'.';
-            }
-        }
-
-        // South.
-        for (y, x) in iproduct!((0..input.len()).rev(), 0..input[0].len()) {
-            if input[y][x] != b'O' {
-                continue;
-            }
-            for (ys, yd) in (y..=input.len() - 1).tuple_windows() {
-                if input[yd][x] != b'.' {
-                    break;
-                }
-                input[yd][x] = b'O';
-                input[ys][x] = b'.';
-            }
-        }
-
-        // East
-        for (x, y) in iproduct!((0..input[0].len()).rev(), 0..input.len()) {
-            if input[y][x] != b'O' {
-                continue;
-            }
-            for (xs, xd) in (x..=input[0].len() - 1).tuple_windows() {
-                if input[y][xd] != b'.' {
-                    break;
-                }
-                input[y][xd] = b'O';
-                input[y][xs] = b'.';
-            }
-        }
-
+        shake(
+            &mut input,
+            iproduct!(0..h, 0..w).map(|(y, x)| (x, y)),
+            |(x, y)| (0..=y).rev().map(move |y| (x, y)).tuple_windows(),
+        );
+        shake(&mut input, iproduct!(0..w, 0..h), |(x, y)| {
+            (0..=x).rev().map(move |x| (x, y)).tuple_windows()
+        });
+        shake(
+            &mut input,
+            iproduct!((0..h).rev(), 0..w).map(|(y, x)| (x, y)),
+            |(x, y)| (y..=h - 1).map(move |y| (x, y)).tuple_windows(),
+        );
+        shake(&mut input, iproduct!((0..w).rev(), 0..h), |(x, y)| {
+            (x..=w - 1).map(move |x| (x, y)).tuple_windows()
+        });
         let load = load(&input);
         let same_load = cache.entry(load).or_default();
         match same_load
@@ -94,6 +49,25 @@ fn part_2(mut input: Vec<Vec<u8>>) -> usize {
         }
     }
     unreachable!()
+}
+
+fn shake<S: Iterator<Item = (Pos<usize>, Pos<usize>)>>(
+    grid: &mut Vec<Vec<u8>>,
+    gi: impl Iterator<Item = Pos<usize>>,
+    s: impl Fn(Pos<usize>) -> S,
+) {
+    for (x, y) in gi {
+        if grid[y][x] != b'O' {
+            continue;
+        }
+        for ((xs, ys), (xd, yd)) in s((x, y)) {
+            if grid[yd][xd] != b'.' {
+                break;
+            }
+            grid[yd][xd] = b'O';
+            grid[ys][xs] = b'.';
+        }
+    }
 }
 
 fn load(grid: &Vec<Vec<u8>>) -> usize {
