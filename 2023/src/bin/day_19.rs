@@ -1,9 +1,5 @@
 advent_of_code_2023::main!();
 
-fn pass(_: u64, _: u64) -> bool {
-    true
-}
-
 #[derive(Copy, Clone, Debug)]
 enum Rule<'a> {
     Pass,
@@ -21,12 +17,14 @@ fn generator(input: &str) -> (HashMap<&str, Vec<(Rule, &str)>>, Vec<HashMap<&str
                     rules
                         .split(',')
                         .map(|r| match r.split(['<', '>', ':']).collect_tuple() {
-                            Some((v, n, d)) => {
-                                // dbg!(v, r, d);
-                                let n = n.parse().unwrap();
-                                let c = if r.contains('<') { u64::lt } else { u64::gt };
-                                (Rule::Cmp(v, n, c), d)
-                            }
+                            Some((v, n, d)) => (
+                                Rule::Cmp(
+                                    v,
+                                    n.parse().unwrap(),
+                                    if r.contains('<') { u64::lt } else { u64::gt },
+                                ),
+                                d,
+                            ),
                             None => (Rule::Pass, r),
                         })
                         .collect(),
@@ -49,7 +47,6 @@ fn generator(input: &str) -> (HashMap<&str, Vec<(Rule, &str)>>, Vec<HashMap<&str
 }
 
 fn part_1((wfs, parts): (HashMap<&str, Vec<(Rule, &str)>>, Vec<HashMap<&str, u64>>)) -> u64 {
-    // dbg!(&wfs, &parts);
     parts
         .into_iter()
         .map(|p| {
@@ -73,74 +70,30 @@ fn part_1((wfs, parts): (HashMap<&str, Vec<(Rule, &str)>>, Vec<HashMap<&str, u64
 }
 
 fn part_2((wfs, _): (HashMap<&str, Vec<(Rule, &str)>>, Vec<HashMap<&str, u64>>)) -> u64 {
-    possibilities(&wfs, "in", (1, 4_000), (1, 4_000), (1, 4_000), (1, 4_000))
+    possibilities(&wfs, "in", [[1, 4_000]; 4])
 }
 
 fn possibilities(
     wfs: &HashMap<&str, Vec<(Rule, &str)>>,
     wf: &str,
-    mut x: (u64, u64),
-    mut m: (u64, u64),
-    mut a: (u64, u64),
-    mut s: (u64, u64),
+    mut parts: [[u64; 2]; 4],
 ) -> u64 {
     match wf {
-        "A" => return (x.1 - x.0 + 1) * (m.1 - m.0 + 1) * (a.1 - a.0 + 1) * (s.1 - s.0 + 1),
+        "A" => return parts.into_iter().map(|[l, u]| u - l + 1).product(),
         "R" => return 0,
         _ => (),
-    };
+    }
     wfs[wf]
         .iter()
-        .map(|&(r, d)| {
-            dbg!(r, d, x, m, a, s);
-            match r {
-                Rule::Pass => possibilities(&wfs, d, x, m, a, s),
-                Rule::Cmp(k, c, f) => {
-                    let lt = f as usize == u64::lt as usize;
-                    match (k, lt) {
-                        ("x", true) => {
-                            let r = possibilities(&wfs, d, (x.0, c - 1), m, a, s);
-                            x.0 = c;
-                            r
-                        }
-                        ("x", false) => {
-                            let r = possibilities(&wfs, d, (c + 1, x.1), m, a, s);
-                            x.1 = c;
-                            r
-                        }
-                        ("m", true) => {
-                            let r = possibilities(&wfs, d, x, (m.0, c - 1), a, s);
-                            m.0 = c;
-                            r
-                        }
-                        ("m", false) => {
-                            let r = possibilities(&wfs, d, x, (c + 1, m.1), a, s);
-                            m.1 = c;
-                            r
-                        }
-                        ("a", true) => {
-                            let r = possibilities(&wfs, d, x, m, (a.0, c - 1), s);
-                            a.0 = c;
-                            r
-                        }
-                        ("a", false) => {
-                            let r = possibilities(&wfs, d, x, m, (c + 1, a.1), s);
-                            a.1 = c;
-                            r
-                        }
-                        ("s", true) => {
-                            let r = possibilities(&wfs, d, x, m, a, (s.0, c - 1));
-                            s.0 = c;
-                            r
-                        }
-                        ("s", false) => {
-                            let r = possibilities(&wfs, d, x, m, a, (c + 1, s.1));
-                            s.1 = c;
-                            r
-                        }
-                        _ => unreachable!(),
-                    }
-                }
+        .map(|&(r, d)| match r {
+            Rule::Pass => possibilities(&wfs, d, parts),
+            Rule::Cmp(k, c, f) => {
+                let i = b"xmas".iter().position(|&p| k.as_bytes()[0] == p).unwrap();
+                let lt = (f as usize == u64::lt as usize) as usize;
+                let mut dup = parts;
+                dup[i][lt] = c + 1 - (lt << 1) as u64;
+                parts[i][lt ^ 1] = c;
+                possibilities(&wfs, d, dup)
             }
         })
         .sum()
