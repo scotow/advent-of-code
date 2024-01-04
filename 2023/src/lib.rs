@@ -3,7 +3,9 @@ macro_rules! main {
     () => {
         #[allow(unused_import)]
         use {
-            advent_of_code_2023::{deltas4, deltas8, max, neighbors4, neighbors6, neighbors8, Pos},
+            advent_of_code_2023::{
+                deltas4, deltas8, max, neighbors4, neighbors6, neighbors8, Pos, Pos3,
+            },
             itertools::{chain, iproduct, repeat_n, Either, FoldWhile, Itertools},
             num::integer::{div_ceil, lcm, Integer},
             pathfinding::directed::{
@@ -38,6 +40,7 @@ use num::{One, ToPrimitive, Zero};
 use std::ops::{Add, Neg, Sub};
 
 pub type Pos<T> = (T, T);
+pub type Pos3<T> = (T, T, T);
 
 pub fn deltas4<N>() -> impl Iterator<Item = (N, N)>
 where

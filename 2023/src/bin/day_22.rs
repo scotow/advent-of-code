@@ -1,7 +1,5 @@
 advent_of_code_2023::main!();
 
-type Pos3<T> = (T, T, T);
-
 #[derive(Clone)]
 struct Layout {
     bricks: Vec<(Pos3<usize>, Pos3<usize>)>,
