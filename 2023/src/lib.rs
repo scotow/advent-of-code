@@ -11,7 +11,7 @@ macro_rules! main {
             pathfinding::directed::{
                 bfs::{bfs, bfs_reach},
                 dfs::{dfs, dfs_reach},
-                dijkstra::{dijkstra, dijkstra_all},
+                dijkstra::{build_path as dijkstra_path, dijkstra, dijkstra_all},
             },
             std::cmp::Ordering,
             std::collections::{hash_map::DefaultHasher, HashMap, HashSet, VecDeque},

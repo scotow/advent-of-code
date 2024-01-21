@@ -11,37 +11,33 @@ fn generator(input: &str) -> HashMap<&str, Vec<&str>> {
     links
 }
 
-fn part_1(input: HashMap<&str, Vec<&str>>) -> usize {
-    let g = input
-        .iter()
-        .flat_map(|(k, vs)| vs.iter().map(move |v| (k, v)))
-        .map(|(k, v)| format!("{} -> {};", k, v))
-        .join("\n");
-    println!("{g}");
-
+fn part_1(mut input: HashMap<&str, Vec<&str>>) -> usize {
     let to_remove = input
         .keys()
-        .tuple_combinations()
-        .filter(|&(l, r)| input[l].contains(r))
-        .tuple_combinations()
-        .find(|&((a1, a2), (b1, b2), (c1, c2))| {
-            let mut map = input.clone();
-            remove_links(&mut map, [(*a1, *a2), (*b1, *b2), (*c1, *c2)]);
-            size(&map, map.keys().next().unwrap()) != input.len()
+        .flat_map(|start| {
+            let all = dijkstra_all(start, |n| input[n].iter().map(|&t| (t, 1)));
+            all.keys()
+                .flat_map(|t| dijkstra_path(t, &all))
+                .collect::<Vec<_>>()
         })
-        .unwrap();
-    dbg!(to_remove);
-
-    let mut links = input.clone();
-    remove_links(
-        &mut links,
-        [
-            (*to_remove.0 .0, *to_remove.0 .1),
-            (*to_remove.1 .0, *to_remove.1 .1),
-            (*to_remove.2 .0, *to_remove.2 .1),
-        ],
-    );
-    links.keys().map(|k| size(&links, k)).unique().product()
+        .counts()
+        .into_iter()
+        .sorted_by_key(|&(_, n)| usize::MAX - n)
+        .take(6)
+        .map(|(k, _)| k)
+        .permutations(6)
+        .find(|cs| cs.chunks(2).all(|ts| input[ts[0]].contains(&ts[1])))
+        .unwrap()
+        .into_iter()
+        .tuples()
+        .collect::<Vec<_>>();
+    remove_links(&mut input, to_remove);
+    input
+        .keys()
+        .map(|k| size(&input, k))
+        .dedup()
+        .take(2)
+        .product()
 }
 
 fn remove_links<'a>(
