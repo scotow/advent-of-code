@@ -22,34 +22,24 @@ fn part_1(mut input: HashMap<&str, Vec<&str>>) -> usize {
         })
         .counts()
         .into_iter()
-        .sorted_by_key(|&(_, n)| usize::MAX - n)
+        .sorted_by_key(|&(_, n)| !n)
         .take(6)
         .map(|(k, _)| k)
         .permutations(6)
         .find(|cs| cs.chunks(2).all(|ts| input[ts[0]].contains(&ts[1])))
-        .unwrap()
-        .into_iter()
-        .tuples()
-        .collect::<Vec<_>>();
-    remove_links(&mut input, to_remove);
+        .unwrap();
+    for (l1, l2) in to_remove.into_iter().tuples() {
+        let index = input[l1].iter().position(|&t| l2 == t).unwrap();
+        input.get_mut(l1).unwrap().remove(index);
+        let index = input[l2].iter().position(|&t| l1 == t).unwrap();
+        input.get_mut(l2).unwrap().remove(index);
+    }
     input
         .keys()
         .map(|k| size(&input, k))
         .dedup()
         .take(2)
         .product()
-}
-
-fn remove_links<'a>(
-    links: &mut HashMap<&str, Vec<&str>>,
-    ls: impl IntoIterator<Item = (&'a str, &'a str)>,
-) {
-    for (l1, l2) in ls {
-        let index = links[l1].iter().position(|&t| l2 == t).unwrap();
-        links.get_mut(l1).unwrap().remove(index);
-        let index = links[l2].iter().position(|&t| l1 == t).unwrap();
-        links.get_mut(l2).unwrap().remove(index);
-    }
 }
 
 fn size(links: &HashMap<&str, Vec<&str>>, start: &str) -> usize {
