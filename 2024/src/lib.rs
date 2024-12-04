@@ -4,7 +4,7 @@ macro_rules! main {
         #[allow(unused_import)]
         use {
             advent_of_code_2024::{
-                deltas4, deltas8, max, neighbors4, neighbors6, neighbors8, Pos, Pos3,
+                deltas4, deltas4diag, deltas8, max, neighbors4, neighbors6, neighbors8, Pos, Pos3,
             },
             itertools::{chain, iproduct, izip, repeat_n, Either, FoldWhile, Itertools},
             num::integer::{div_ceil, lcm, Integer},
@@ -51,8 +51,21 @@ where
         (N::one(), N::zero()),
         (N::zero(), N::one()),
         (N::one().neg(), N::zero()),
-    ]
+    ] // ← ↓ → ↑
     .into_iter()
+}
+
+pub fn deltas4diag<N>() -> impl Iterator<Item = (N, N)>
+where
+    N: Neg<Output = N> + Zero + One,
+{
+    [
+        (N::one().neg(), N::one().neg()),
+        (N::one().neg(), N::one()),
+        (N::one(), N::one()),
+        (N::one(), N::one().neg()),
+    ] // ↖ ↗ ↘ ↙
+        .into_iter()
 }
 
 pub fn deltas8<N>() -> impl Iterator<Item = (N, N)>
