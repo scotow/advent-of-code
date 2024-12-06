@@ -19,12 +19,14 @@ fn generator(input: &str) -> (HashSet<Pos<usize>>, Pos<usize>) {
 }
 
 fn part_1((obstacles, pos): (HashSet<Pos<usize>>, Pos<usize>)) -> usize {
-    solve(&obstacles, pos, max(&obstacles)).unwrap()
+    solve(&obstacles, pos, max(&obstacles)).unwrap().len()
 }
 
 fn part_2((obstacles, pos): (HashSet<Pos<usize>>, Pos<usize>)) -> usize {
     let max = max(&obstacles);
-    iproduct!(0..=max.1, 0..=max.0)
+    solve(&obstacles, pos, max)
+        .unwrap()
+        .into_iter()
         .filter(|&o| {
             let mut obstacles = obstacles.clone();
             obstacles.insert(o);
@@ -33,7 +35,11 @@ fn part_2((obstacles, pos): (HashSet<Pos<usize>>, Pos<usize>)) -> usize {
         .count()
 }
 
-fn solve(obstacles: &HashSet<Pos<usize>>, mut pos: Pos<usize>, max: Pos<usize>) -> Option<usize> {
+fn solve(
+    obstacles: &HashSet<Pos<usize>>,
+    mut pos: Pos<usize>,
+    max: Pos<usize>,
+) -> Option<HashSet<Pos<usize>>> {
     let mut dir = (0, -1);
     let mut visited = HashSet::from([(pos, dir)]);
     loop {
@@ -45,7 +51,7 @@ fn solve(obstacles: &HashSet<Pos<usize>>, mut pos: Pos<usize>, max: Pos<usize>) 
             dir = (-dir.1, dir.0);
         } else {
             if next.0 > max.0 || next.1 > max.1 {
-                return Some(visited.into_iter().map(|(p, _)| p).unique().count());
+                return Some(visited.into_iter().map(|(p, _)| p).collect());
             }
             pos = next;
             if !visited.insert((pos, dir)) {
