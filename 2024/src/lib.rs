@@ -12,6 +12,7 @@ macro_rules! main {
                 bfs::{bfs, bfs_reach},
                 dfs::{dfs, dfs_reach},
                 dijkstra::{build_path as dijkstra_path, dijkstra, dijkstra_all},
+                count_paths::count_paths,
             },
             std::cmp::Ordering,
             std::collections::{hash_map::DefaultHasher, HashMap, HashSet, VecDeque},
