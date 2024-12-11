@@ -16,6 +16,7 @@ macro_rules! main {
             },
             std::cmp::Ordering,
             std::collections::{hash_map::DefaultHasher, HashMap, HashSet, VecDeque},
+            std::convert::identity,
             std::fmt::{Debug, Display, Formatter},
             std::hash::{Hash, Hasher},
             std::iter::{once, successors, zip, Peekable},
