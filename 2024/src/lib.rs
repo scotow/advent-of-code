@@ -4,7 +4,7 @@ macro_rules! main {
         #[allow(unused_import)]
         use {
             advent_of_code_2024::{
-                deltas4, deltas4diag, deltas8, max, neighbors4, neighbors6, neighbors8, Pos, Pos3,
+                deltas4, deltas4diag, deltas8, max, neighbors4, neighbors4diag, neighbors6, neighbors8, Pos, Pos3,
             },
             itertools::{chain, iproduct, izip, repeat_n, Either, FoldWhile, Itertools},
             num::integer::{div_ceil, lcm, Integer},
@@ -93,6 +93,13 @@ where
     N: WrappingAdd + WrappingSub + PartialOrd<N> + One + ToPrimitive + Copy,
 {
     neighbors8(x, y).filter(move |&(xn, yn)| x == xn || y == yn)
+}
+
+pub fn neighbors4diag<N>(x: N, y: N) -> impl Iterator<Item = (N, N)>
+where
+    N: WrappingAdd + WrappingSub + PartialOrd<N> + One + ToPrimitive + Copy,
+{
+    neighbors8(x, y).filter(move |&(xn, yn)| x != xn && y != yn)
 }
 
 pub fn neighbors8<N>(x: N, y: N) -> impl Iterator<Item = (N, N)>
