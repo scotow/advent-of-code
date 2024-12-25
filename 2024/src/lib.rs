@@ -21,7 +21,7 @@ macro_rules! main {
             std::hash::{Hash, Hasher},
             std::iter::{once, successors, zip, Peekable},
             std::mem::{replace, take, swap},
-            std::ops::{Add, Div, Mul, Range, RangeInclusive, Sub},
+            std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Range, RangeInclusive, Sub},
             std::rc::Rc,
             std::str::{from_utf8, FromStr},
         };
