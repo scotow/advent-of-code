@@ -1,0 +1,12 @@
+[package]
+name = "advent-of-code-2025"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+itertools = "0.14.0"
+num = "0.4.3"
+pathfinding = "4.14.0"
+
+[lints]
+clippy.type_complexity = "allow"
